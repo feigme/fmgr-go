@@ -51,8 +51,15 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("初始化数据库")
 
+		// 初始化日志
+		bootstrap.InitializeLog()
+
+		// 初始化配置
+		bootstrap.InitializeConfig()
+
 		// 初始化表
-		bootstrap.InitMySqlTables(models.Option{})
+		var models = []interface{}{&models.Option{}}
+		bootstrap.InitMySqlTables(models...)
 
 	},
 }

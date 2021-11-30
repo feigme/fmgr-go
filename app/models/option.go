@@ -24,11 +24,6 @@ type Option struct {
 	SellPrice            string // 卖出价格
 }
 
-// 指定表名称
-func (Option) TableName() string {
-	return "option"
-}
-
 var (
 	reg = regexp.MustCompile(`^([A-Za-z]{1,4})(\d{6})([A-Za-z]{1})(\d{5})$`)
 )

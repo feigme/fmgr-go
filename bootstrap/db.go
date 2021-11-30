@@ -13,6 +13,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 func InitializeDB() *gorm.DB {
@@ -43,8 +44,9 @@ func initMySqlGorm() *gorm.DB {
 		SkipInitializeWithVersion: false, // 根据版本自动配置
 	}
 	if db, err := gorm.Open(mysql.New(mysqlConfig), &gorm.Config{
-		DisableForeignKeyConstraintWhenMigrating: true,            // 禁用自动创建外键约束
-		Logger:                                   getGormLogger(), // 使用自定义 Logger
+		DisableForeignKeyConstraintWhenMigrating: true,                                       // 禁用自动创建外键约束
+		Logger:                                   getGormLogger(),                            // 使用自定义 Logger
+		NamingStrategy:                           schema.NamingStrategy{SingularTable: true}, // 禁用表名加s
 	}); err != nil {
 		global.App.Log.Error("mysql connect failed, err:", zap.Any("err", err))
 		return nil
@@ -52,6 +54,7 @@ func initMySqlGorm() *gorm.DB {
 		sqlDB, _ := db.DB()
 		sqlDB.SetMaxIdleConns(dbConfig.MaxIdleConns)
 		sqlDB.SetMaxOpenConns(dbConfig.MaxOpenConns)
+
 		global.App.DB = db
 		return db
 	}
@@ -65,7 +68,7 @@ func InitMySqlTables(dst ...interface{}) {
 		InitializeDB()
 	}
 
-	err := global.App.DB.AutoMigrate(dst)
+	err := global.App.DB.AutoMigrate(dst...)
 	if err != nil {
 		global.App.Log.Error("migrate table failed", zap.Any("err", err))
 		os.Exit(0)
