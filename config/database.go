@@ -8,9 +8,9 @@ type Database struct {
 	UserName            string `mapstructure:"username" json:"username" yaml:"username"`
 	Password            string `mapstructure:"password" json:"password" yaml:"password"`
 	Charset             string `mapstructure:"charset" json:"charset" yaml:"charset"`
-	MaxIdleConns        int    `mapstructure:"max_idle_conns" json:"max_idle_conns" yaml:"max_idle_conns"`
-	MaxOpenConns        int    `mapstructure:"max_open_conns" json:"max_open_conns" yaml:"max_open_conns"`
-	LogMode             string `mapstructure:"log_mode" json:"log_mode" yaml:"log_mode"`
-	EnableFileLogWriter bool   `mapstructure:"enable_file_log_writer" json:"enable_file_log_writer" yaml:"enable_file_log_writer"`
-	LogFilename         string `mapstructure:"log_filename" json:"log_filename" yaml:"log_filename"`
+	MaxIdleConns        int    `mapstructure:"max-idle-conns" json:"max-idle-conns" yaml:"max-idle-conns"`
+	MaxOpenConns        int    `mapstructure:"max-open-conns" json:"max-open-conns" yaml:"max-open-conns"`
+	LogMode             string `mapstructure:"log-mode" json:"log-mode" yaml:"log-mode"`
+	EnableFileLogWriter bool   `mapstructure:"enable-file-log-writer" json:"enable-file-log-writer" yaml:"enable-file-log-writer"`
+	LogFilename         string `mapstructure:"log-filename" json:"log-filename" yaml:"log-filename"`
 }

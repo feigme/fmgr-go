@@ -28,7 +28,10 @@ func InitializeLog() *zap.Logger {
 	}
 
 	// 初始化 zap
-	return zap.New(getZapCore(), options...)
+	global.App.Log = zap.New(getZapCore(), options...)
+	global.App.Log.Info("log init success!")
+
+	return global.App.Log
 }
 
 func createRootDir() {

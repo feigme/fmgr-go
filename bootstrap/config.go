@@ -39,5 +39,6 @@ func InitializeConfig() *viper.Viper {
 		fmt.Println(err)
 	}
 
+	global.App.Log.Info("config init success!")
 	return v
 }
