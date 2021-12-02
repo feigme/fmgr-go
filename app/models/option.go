@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cast"
 )
@@ -52,6 +53,8 @@ func NewOption(code, position, price string) (*Option, error) {
 		ExerciseDate:         regResult[2],
 		ContractSize:         100,
 	}
+	option.CreateTime = time.Now()
+	option.UpdateTime = time.Now()
 
 	if position == "long" {
 		option.PurchasePrice = price
