@@ -9,7 +9,7 @@ import (
 
 type Application struct {
 	ConfigViper *viper.Viper
-	Config      config.Config
+	Config      *config.Config
 	Log         *zap.Logger
 	DB          *gorm.DB
 }

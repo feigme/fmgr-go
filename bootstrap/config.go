@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitializeConfig() *viper.Viper {
+func init() {
 	// 设置配置文件路径
 	config := "config.yaml"
 	// 生产环境可以通过设置环境变量来改变配置文件路径
@@ -17,9 +17,11 @@ func InitializeConfig() *viper.Viper {
 		config = configEnv
 	}
 
-	// 初始化 viper
+	// 1. 初始化 viper
 	v := viper.New()
+	// 2. 设置文件名称
 	v.SetConfigFile(config)
+	// 3. 配置类型
 	v.SetConfigType("yaml")
 	if err := v.ReadInConfig(); err != nil {
 		panic(fmt.Errorf("read config failed: %s \n", err))
@@ -39,6 +41,5 @@ func InitializeConfig() *viper.Viper {
 		fmt.Println(err)
 	}
 
-	global.App.Log.Info("config init success!")
-	return v
+	fmt.Println("config init success!")
 }

@@ -16,7 +16,7 @@ var (
 	options []zap.Option  // zap 配置项
 )
 
-func InitializeLog() *zap.Logger {
+func init() {
 	// 创建根目录
 	createRootDir()
 
@@ -30,8 +30,6 @@ func InitializeLog() *zap.Logger {
 	// 初始化 zap
 	global.App.Log = zap.New(getZapCore(), options...)
 	global.App.Log.Info("log init success!")
-
-	return global.App.Log
 }
 
 func createRootDir() {
