@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/feigme/fmgr-go/app/enum"
+	"github.com/feigme/fmgr-go/app/models"
 	"github.com/feigme/fmgr-go/global"
 	"github.com/feigme/fmgr-go/pkg/test"
 	"github.com/stretchr/testify/require"
@@ -36,12 +38,19 @@ func init() {
 func TestSave(t *testing.T) {
 	// mock
 	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO `option`").WithArgs(test.AnyTime{}, test.AnyTime{}, "NIO211126P40000", "short", 40000, 0, "P", "NIO", "211126", 100, "", "1.52").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO `option_trade`").WithArgs(test.AnyTime{}, test.AnyTime{}, "NIO211126P40000", "short", 40000, 0, "P", "NIO", "211126", 100, "", "1.52").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	option, err := optionRepo.Save("NIO211126P40000", "short", "1.52")
+	option, err := models.NewOption("NIO211126P40000")
 	require.NoError(t, err)
-	require.NotNil(t, option.Id)
+
+	trade, err := models.NewOptionTrade(option, enum.SHORT, "1.52")
+	require.NoError(t, err)
+
+	err = OptionTradeRepo.Save(trade)
+	require.NoError(t, err)
+
+	require.NotNil(t, trade.Id)
 
 	err = mock.ExpectationsWereMet()
 	require.NoError(t, err)

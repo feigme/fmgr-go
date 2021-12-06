@@ -7,23 +7,20 @@ import (
 )
 
 func TestNewOption(t *testing.T) {
-	option, err := NewOption("NIO211126P40000", "short", "1.52")
+	option, err := NewOption("NIO211126P40000")
 	require.NoError(t, err)
 	require.Equal(t, "NIO211126P40000", option.Code)
-	require.Equal(t, "NIO", option.UnderlyingSecurities)
+	require.Equal(t, "NIO", option.Stock)
 	require.Equal(t, "211126", option.ExerciseDate)
 	require.Equal(t, "P", option.Type)
-	require.Equal(t, int64(40000), option.StrikePrice)
-	require.Equal(t, "short", option.Position)
-	require.Equal(t, "1.52", option.SellPrice)
+	require.Equal(t, "40000", option.StrikePrice)
 
-	option, err = NewOption("nio211126p40000", "Short", "1.52")
+	option, err = NewOption("nio211126p40000")
 	require.NoError(t, err)
 	require.Equal(t, "NIO211126P40000", option.Code)
-	require.Equal(t, "NIO", option.UnderlyingSecurities)
+	require.Equal(t, "NIO", option.Stock)
 	require.Equal(t, "211126", option.ExerciseDate)
 	require.Equal(t, "P", option.Type)
-	require.Equal(t, int64(40000), option.StrikePrice)
-	require.Equal(t, "short", option.Position)
-	require.Equal(t, "1.52", option.SellPrice)
+	require.Equal(t, "40000", option.StrikePrice)
+
 }

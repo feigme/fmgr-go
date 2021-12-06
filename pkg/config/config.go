@@ -1,13 +1,15 @@
-package bootstrap
+package config
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/feigme/fmgr-go/global"
+	"github.com/feigme/fmgr-go/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
+
+var Config *config.Config
 
 func init() {
 	// 设置配置文件路径
@@ -32,14 +34,12 @@ func init() {
 	v.OnConfigChange(func(in fsnotify.Event) {
 		fmt.Println("config file changed:", in.Name)
 		// 重载配置
-		if err := v.Unmarshal(&global.App.Config); err != nil {
+		if err := v.Unmarshal(&Config); err != nil {
 			fmt.Println(err)
 		}
 	})
 	// 将配置赋值给全局变量
-	if err := v.Unmarshal(&global.App.Config); err != nil {
+	if err := v.Unmarshal(&Config); err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println("config init success!")
 }
