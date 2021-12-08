@@ -26,16 +26,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	red  = color.New(color.FgRed)
+	blue = color.New(color.FgHiBlue)
+)
+
 // optionstCmd represents the optionst command
 var optionstCmd = &cobra.Command{
-	Use:   "optionst",
+	Use:   "opst",
 	Short: "期权策略",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  `a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("optionst called")
 	},
@@ -43,11 +43,9 @@ to quickly create a Cobra application.`,
 
 var optionstCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "创建期权策略",
-	Long:  `创建期权策略命令.`,
+	Short: "创建期权",
+	Long:  `a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		red := color.New(color.FgRed)
-		blue := color.New(color.FgHiBlue)
 
 		// 期权code
 		blue.Println("请输入期权code：")
@@ -58,45 +56,129 @@ var optionstCreateCmd = &cobra.Command{
 			red.Printf("输入期权code错误：%s\n", err.Error())
 			os.Exit(1)
 		}
-		blue.Printf("期权code：%s\n", option.Code)
 
 		// 期权操作
-		blue.Println("请现在操作序号：")
-		for _, v := range enum.OptionOperateList() {
+		blue.Println("请选择操作序号：")
+		km := make([]enum.KeyMap, 0)
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.LONG.Desc()), Val: int(enum.LONG)})
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.SHORT.Desc()), Val: int(enum.SHORT)})
+		for _, v := range km {
 			blue.Printf("  %d: %s\n", v.Val, v.Key)
 		}
 		var ops int
 		fmt.Scanln(&ops)
-		optionOperate, err := enum.GetOptionOperateByKey(ops)
-		if err != nil {
-			red.Printf("输入操作错误：%s\n", err.Error())
+		operate := enum.OptionCreateEnum(ops)
+		if operate != enum.LONG && operate != enum.SHORT {
+			red.Printf("输入操作错误！\n")
 			os.Exit(1)
 		}
-		blue.Printf("期权code：%s，操作：%s\n", option.Code, optionOperate.Desc())
 
 		// 操作价格
 		blue.Println("请输入价格：")
 		var price string
 		fmt.Scanln(&price)
 
-		trade, err := models.NewOptionTrade(option, optionOperate, price)
-		if err != nil {
-			red.Printf("输入价格错误：%s\n", err.Error())
-			os.Exit(1)
-		}
-		blue.Printf("期权code：%s，操作：%s，价格：%s\n", option.Code, optionOperate.Desc(), price)
+		// 数量
+		blue.Println("请输入数量：")
+		var count int
+		fmt.Scanln(&count)
 
-		err = service.OptionTradeSvc.Save(trade)
-		if err != nil {
-			red.Printf("创建错误：%s\n", err.Error())
+		for i := 0; i < count; i++ {
+			trade, err := models.NewOptionTrade(option, operate, price)
+			if err != nil {
+				red.Printf("输入价格错误：%s\n", err.Error())
+				os.Exit(1)
+			}
+			err = service.OptionTradeSvc.Save(trade)
+			if err != nil {
+				red.Printf("创建错误：%s\n", err.Error())
+				os.Exit(1)
+			}
+		}
+		blue.Printf("期权code：%s，操作：%s，价格：%s，数量：%d \n", option.Code, operate.Desc(), price, count)
+	},
+}
+
+var optionstListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "期权列表",
+	Long:  `a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		var code string
+		if len(args) > 0 {
+			code = args[0]
+		}
+		tradeList := service.OptionTradeSvc.List(code)
+		if len(tradeList) == 0 {
+			red.Println("没有数据！")
 			os.Exit(1)
 		}
+
+		blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 收益")
+		for _, trade := range tradeList {
+			blue.Printf("%s \t %s \t %s \t %d \t %s \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, trade.Profit)
+		}
+	},
+}
+
+var optionstCloseCmd = &cobra.Command{
+	Use:   "close",
+	Short: "期权平仓",
+	Long:  `a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			red.Println("选择要操作的期权code！")
+			os.Exit(1)
+		}
+
+		trade, err := service.OptionTradeSvc.Get(args[0])
+		if err == nil {
+			red.Println("没找到对应的期权！")
+			os.Exit(1)
+		}
+		blue.Printf("%s \t %s \t %s \t %d \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium)
+		fmt.Println()
+
+		// 选择操作
+		blue.Println("请选择操作序号：")
+		km := make([]enum.KeyMap, 0)
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.CLOSE.Desc()), Val: int(enum.CLOSE)})
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.INVALID.Desc()), Val: int(enum.INVALID)})
+		for _, v := range km {
+			blue.Printf("  %d: %s\n", v.Val, v.Key)
+		}
+		var ops int
+		fmt.Scanln(&ops)
+		operate := enum.OptionCloseEnum(ops)
+		if operate != enum.CLOSE && operate != enum.INVALID {
+			red.Printf("输入操作错误！%s\n")
+			os.Exit(1)
+		}
+
+		// 平仓
+		if operate == enum.CLOSE {
+			// 操作价格
+			blue.Println("请输入价格：")
+			var price string
+			fmt.Scanln(&price)
+
+			trade.Close(operate, price)
+			service.OptionTradeSvc.Close(trade)
+			blue.Printf("期权code：%s，操作：%s\n", trade.Code, operate.Desc())
+		} else if operate == enum.INVALID {
+			trade.Invalid(operate)
+			service.OptionTradeSvc.Close(trade)
+			blue.Printf("期权code：%s，操作：%s，价格：%s\n", trade.Code, operate.Desc(), trade.ClosePrice)
+		}
+
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(optionstCmd)
 	optionstCmd.AddCommand(optionstCreateCmd)
+	optionstCmd.AddCommand(optionstListCmd)
+	optionstCmd.AddCommand(optionstCloseCmd)
 
 	// Here you will define your flags and configuration settings.
 
