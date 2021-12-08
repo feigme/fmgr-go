@@ -54,7 +54,7 @@ func NewOptionTrade(option *Option, optCreateEnum enum.OptionCreateEnum, price s
 	} else {
 		return nil, errors.New("期权操作类型错误！")
 	}
-	trade.Status = int64(optCreateEnum)
+	trade.Status = int64(enum.OPTION_STATUS_HAVING)
 	trade.Premium = fmt.Sprintf("%.0f", pricef*float64(trade.ContractSize)*float64(trade.Count))
 
 	return trade, nil
@@ -66,7 +66,7 @@ func (trade *OptionTrade) Close(optCloseEnum enum.OptionCloseEnum, price string)
 		return errors.New("操作类型错误！")
 	}
 	// 平仓
-	trade.Status = int64(enum.CLOSE)
+	trade.Status = int64(enum.OPTION_STATUS_CLOSE)
 
 	pricef, err := strconv.ParseFloat(price, 64)
 	if err != nil {
@@ -87,7 +87,7 @@ func (trade *OptionTrade) Invalid(optCloseEnum enum.OptionCloseEnum) error {
 	}
 
 	// 失效
-	trade.Status = int64(enum.INVALID)
+	trade.Status = int64(enum.OPTION_STATUS_INVALID)
 	trade.ClosePrice = "0"
 	trade.Profit = trade.Premium
 	return nil

@@ -114,9 +114,9 @@ var optionstListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 收益")
+		blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 收益")
 		for _, trade := range tradeList {
-			blue.Printf("%s \t %s \t %s \t %d \t %s \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, trade.Profit)
+			blue.Printf("%s \t %s \t %s \t %d \t %s         \t %s \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.Profit)
 		}
 	},
 }
@@ -132,11 +132,12 @@ var optionstCloseCmd = &cobra.Command{
 		}
 
 		trade, err := service.OptionTradeSvc.Get(args[0])
-		if err == nil {
+		if err != nil {
 			red.Println("没找到对应的期权！")
 			os.Exit(1)
 		}
-		blue.Printf("%s \t %s \t %s \t %d \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium)
+		blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 收益")
+		blue.Printf("%s \t %s \t %s \t %d \t %s         \t %s \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.Profit)
 		fmt.Println()
 
 		// 选择操作

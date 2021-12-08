@@ -1,14 +1,19 @@
 package db
 
 import (
+	"io"
+	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/feigme/fmgr-go/pkg/config"
-	"github.com/feigme/fmgr-go/pkg/log"
+	"github.com/feigme/fmgr-go/pkg/zaplog"
 	"go.uber.org/zap"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -46,8 +51,9 @@ func initMySqlGorm() *gorm.DB {
 	if db, err := gorm.Open(mysql.New(mysqlConfig), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,                                       // 禁用自动创建外键约束
 		NamingStrategy:                           schema.NamingStrategy{SingularTable: true}, // 禁用表名加s
+		Logger:                                   getGormLogger(),                            // 使用自定义 Logger
 	}); err != nil {
-		log.Log.Error("mysql connect failed, err:", zap.Any("err", err))
+		zaplog.Log.Error("mysql connect failed, err:", zap.Any("err", err))
 		return nil
 	} else {
 		sqlDB, _ := db.DB()
@@ -55,7 +61,7 @@ func initMySqlGorm() *gorm.DB {
 		sqlDB.SetMaxOpenConns(dbConfig.MaxOpenConns)
 
 		DB = db
-		log.Log.Info("db init success!")
+		zaplog.Log.Info("db init success!")
 		return db
 	}
 }
@@ -65,7 +71,7 @@ func InitMySqlTables(dst ...interface{}) {
 
 	err := DB.AutoMigrate(dst...)
 	if err != nil {
-		log.Log.Error("migrate table failed", zap.Any("err", err))
+		zaplog.Log.Error("migrate table failed", zap.Any("err", err))
 		os.Exit(0)
 	}
 
@@ -76,4 +82,49 @@ func InitMySqlTables(dst ...interface{}) {
 			db.Close()
 		}
 	}()
+}
+
+func getGormLogger() logger.Interface {
+	var logMode logger.LogLevel
+
+	switch config.Config.Database.LogMode {
+	case "silent":
+		logMode = logger.Silent
+	case "error":
+		logMode = logger.Error
+	case "warn":
+		logMode = logger.Warn
+	case "info":
+		logMode = logger.Info
+	default:
+		logMode = logger.Info
+	}
+
+	return logger.New(getGormLogWriter(), logger.Config{
+		SlowThreshold:             200 * time.Millisecond,                      // 慢 SQL 阈值
+		LogLevel:                  logMode,                                     // 日志级别
+		IgnoreRecordNotFoundError: false,                                       // 忽略ErrRecordNotFound（记录未找到）错误
+		Colorful:                  !config.Config.Database.EnableFileLogWriter, // 禁用彩色打印
+	})
+}
+
+// 自定义 gorm Writer
+func getGormLogWriter() logger.Writer {
+	var writer io.Writer
+
+	// 是否启用日志文件
+	if config.Config.Database.EnableFileLogWriter {
+		// 自定义 Writer
+		writer = &lumberjack.Logger{
+			Filename:   config.Config.Log.RootDir + "/" + config.Config.Database.LogFilename,
+			MaxSize:    config.Config.Log.MaxSize,
+			MaxBackups: config.Config.Log.MaxBackups,
+			MaxAge:     config.Config.Log.MaxAge,
+			Compress:   config.Config.Log.Compress,
+		}
+	} else {
+		// 默认 Writer
+		writer = os.Stdout
+	}
+	return log.New(writer, "\r\n", log.LstdFlags)
 }

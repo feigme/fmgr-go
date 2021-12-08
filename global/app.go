@@ -4,7 +4,8 @@ import (
 	"github.com/feigme/fmgr-go/config"
 	aconfig "github.com/feigme/fmgr-go/pkg/config"
 	"github.com/feigme/fmgr-go/pkg/db"
-	"github.com/feigme/fmgr-go/pkg/log"
+
+	"github.com/feigme/fmgr-go/pkg/zaplog"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
@@ -20,6 +21,6 @@ type Application struct {
 
 var App = &Application{
 	Config: aconfig.Config,
-	Log:    log.Log,
+	Log:    zaplog.Log,
 	DB:     db.DB,
 }
