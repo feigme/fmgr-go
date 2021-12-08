@@ -103,7 +103,10 @@ var optionstCreateCmd = &cobra.Command{
 var optionstListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "期权列表",
-	Long:  `a Cobra application.`,
+	Long: `查询期权列表，可根据code模糊查询.
+  例子：
+    fmgr-go opst list baba // 查询期权带有baba关键字的
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var code string
 		if len(args) > 0 {
