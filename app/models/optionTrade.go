@@ -62,6 +62,10 @@ func NewOptionTrade(option *Option, optCreateEnum enum.OptionCreateEnum, price s
 
 func (trade *OptionTrade) Close(optCloseEnum enum.OptionCloseEnum, price string) error {
 
+	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
+		return errors.New("该期权已经平仓或者失效！")
+	}
+
 	if optCloseEnum != enum.CLOSE {
 		return errors.New("操作类型错误！")
 	}
@@ -82,6 +86,10 @@ func (trade *OptionTrade) Close(optCloseEnum enum.OptionCloseEnum, price string)
 }
 
 func (trade *OptionTrade) Invalid(optCloseEnum enum.OptionCloseEnum) error {
+	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
+		return errors.New("该期权已经平仓或者失效！")
+	}
+
 	if optCloseEnum != enum.INVALID {
 		return errors.New("操作类型错误！")
 	}

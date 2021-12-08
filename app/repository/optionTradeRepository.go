@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/feigme/fmgr-go/app/models"
+	"github.com/feigme/fmgr-go/app/query"
 	"github.com/feigme/fmgr-go/global"
 )
 
@@ -17,13 +18,18 @@ func (o *OptionTradeRepository) Save(trade *models.OptionTrade) error {
 	return global.App.DB.Save(trade).Error
 }
 
-func (o *OptionTradeRepository) List(code string) (list []models.OptionTrade) {
-	if code == "" {
-		global.App.DB.Find(&list)
-	} else {
-		code = strings.ToUpper(code)
-		global.App.DB.Where(fmt.Sprintf(" code like '%%%s%%' ", code)).Find(&list)
+func (o *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
+	tx := global.App.DB
+	if query.Code != "" {
+		code := strings.ToUpper(query.Code)
+		tx = tx.Where(fmt.Sprintf(" code like '%%%s%%' ", code))
 	}
+
+	if len(query.StatusList) > 0 {
+		tx = tx.Where(" status in (?)", query.StatusList)
+	}
+
+	tx.Find(&list)
 	return list
 }
 

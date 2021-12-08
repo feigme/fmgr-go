@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/feigme/fmgr-go/app/models"
+	"github.com/feigme/fmgr-go/app/query"
 	"github.com/feigme/fmgr-go/app/repository"
 )
 
@@ -13,8 +14,8 @@ func (svc *OptionTradeService) Save(trade *models.OptionTrade) error {
 	return repository.OptionTradeRepo.Save(trade)
 }
 
-func (svc *OptionTradeService) List(code string) (list []models.OptionTrade) {
-	return repository.OptionTradeRepo.List(code)
+func (svc *OptionTradeService) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
+	return repository.OptionTradeRepo.List(query)
 }
 
 func (svc *OptionTradeService) Get(code string) (*models.OptionTrade, error) {

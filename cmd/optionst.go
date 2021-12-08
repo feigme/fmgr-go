@@ -22,6 +22,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/feigme/fmgr-go/app/enum"
 	"github.com/feigme/fmgr-go/app/models"
+	"github.com/feigme/fmgr-go/app/query"
 	"github.com/feigme/fmgr-go/app/service"
 	"github.com/spf13/cobra"
 )
@@ -108,7 +109,9 @@ var optionstListCmd = &cobra.Command{
 		if len(args) > 0 {
 			code = args[0]
 		}
-		tradeList := service.OptionTradeSvc.List(code)
+
+		optionTradeQuery.Code = code
+		tradeList := service.OptionTradeSvc.List(&optionTradeQuery)
 		if len(tradeList) == 0 {
 			red.Println("没有数据！")
 			os.Exit(1)
@@ -131,11 +134,17 @@ var optionstCloseCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		trade, err := service.OptionTradeSvc.Get(args[0])
-		if err != nil {
+		optionTradeQuery.Code = args[0]
+		tradeList := service.OptionTradeSvc.List(&optionTradeQuery)
+		if len(tradeList) == 0 {
 			red.Println("没找到对应的期权！")
 			os.Exit(1)
+		} else if len(tradeList) > 1 {
+			red.Println("找到多个期权，请增加筛选条件！")
+			os.Exit(1)
 		}
+		trade := &tradeList[0]
+
 		blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 收益")
 		blue.Printf("%s \t %s \t %s \t %d \t %s         \t %s \t %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.Profit)
 		fmt.Println()
@@ -175,10 +184,18 @@ var optionstCloseCmd = &cobra.Command{
 	},
 }
 
+var (
+	optionTradeQuery query.OptionTradeQuery
+)
+
 func init() {
 	rootCmd.AddCommand(optionstCmd)
 	optionstCmd.AddCommand(optionstCreateCmd)
+
+	optionstListCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
 	optionstCmd.AddCommand(optionstListCmd)
+
+	optionstCloseCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
 	optionstCmd.AddCommand(optionstCloseCmd)
 
 	// Here you will define your flags and configuration settings.
