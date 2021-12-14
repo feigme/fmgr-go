@@ -29,7 +29,14 @@ func (o *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []mode
 		tx = tx.Where(" status in (?)", query.StatusList)
 	}
 
-	tx.Find(&list)
+	if query.StartExerciseDate != "" {
+		tx = tx.Where(" exercise_date >= ? ", query.StartExerciseDate)
+	}
+	if query.EndExerciseDate != "" {
+		tx = tx.Where(" exercise_date <= ? ", query.EndExerciseDate)
+	}
+
+	tx.Offset(query.GetOffset()).Limit(query.PageSize).Order(" code asc, exercise_date asc").Find(&list)
 	return list
 }
 
