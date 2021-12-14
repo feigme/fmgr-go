@@ -22,5 +22,4 @@ func TestNewOption(t *testing.T) {
 	require.Equal(t, "211126", option.ExerciseDate)
 	require.Equal(t, "P", option.Type)
 	require.Equal(t, "40000", option.StrikePrice)
-
 }

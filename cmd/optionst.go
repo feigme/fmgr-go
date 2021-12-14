@@ -115,6 +115,11 @@ var optionstListCmd = &cobra.Command{
 		}
 
 		optionTradeQuery.Code = code
+		// 默认值, cobra命令默认值没生效
+		if len(optionTradeQuery.StatusList) == 0 {
+			optionTradeQuery.StatusList = append(optionTradeQuery.StatusList, 1)
+		}
+
 		tradeList := service.OptionTradeSvc.List(&optionTradeQuery)
 		if len(tradeList) == 0 {
 			red.Println("没有数据！")
@@ -196,7 +201,8 @@ func init() {
 	rootCmd.AddCommand(optionstCmd)
 	optionstCmd.AddCommand(optionstCreateCmd)
 
-	optionstListCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
+	// 初始化slice没有生效
+	optionstListCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
 	optionstListCmd.Flags().StringVar(&optionTradeQuery.StartExerciseDate, "from", fmt.Sprint(time.Now().Format("060102")), "查询行权日范围，开始时间")
 	optionstListCmd.Flags().StringVar(&optionTradeQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
 	optionstListCmd.Flags().IntVar(&optionTradeQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
