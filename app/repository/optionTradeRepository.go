@@ -18,6 +18,11 @@ func (repo *OptionTradeRepository) Save(trade *models.OptionTrade) error {
 	return global.App.DB.Save(trade).Error
 }
 
+func (repo *OptionTradeRepository) GetById(id uint) (trade *models.OptionTrade, err error) {
+	err = global.App.DB.Where(" id = ? ", id).Find(&trade).Error
+	return trade, err
+}
+
 func (repo *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
 	tx := global.App.DB
 	if query.Code != "" {
@@ -53,9 +58,8 @@ func (repo *OptionTradeRepository) Update(trade *models.OptionTrade) error {
 	return global.App.DB.Updates(&trade).Error
 }
 
-func (repo *OptionTradeRepository) Delete(trade *models.OptionTrade) error {
-	if trade.Id == 0 {
-		return errors.New("ID为空！")
-	}
-	return global.App.DB.Delete(&trade).Error
+func (repo *OptionTradeRepository) Delete(id uint) error {
+	trade := &models.OptionTrade{}
+	trade.Id = id
+	return global.App.DB.Delete(trade).Error
 }
