@@ -127,21 +127,32 @@ var optionListCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 平仓价格 \t 收益")
+		printOptionTableHead()
 		for _, trade := range tradeList {
-			blue.Printf("%s \t %s \t %s \t %d \t %s         \t %s \t %s \t    %s \n", trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.ClosePrice, trade.Profit)
+			printOptionTableRow(trade)
 		}
 	},
 }
 
 func printOptionTableHead() {
-	blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 平仓价格 \t 收益 \t 收益率")
+	blue.Println("期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 平仓价格 \t收益 \t 收益率")
 }
 
 func printOptionTableRow(trade models.OptionTrade) {
-	row := "%s \t %s \t %s \t %d \t %s         \t %s \t %s \t    %s \t %s \n"
-	rate := fmt.Sprintf("%.0f", (cast.ToFloat64(trade.Price)-cast.ToFloat64(trade.ClosePrice))/cast.ToFloat64(trade.ClosePrice)*100)
-	blue.Printf(row, trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.ClosePrice, trade.Profit, rate)
+	colorFunc := color.New(color.FgHiBlue).SprintFunc()
+	if trade.Profit != "" && cast.ToFloat64(trade.Profit) < 0 {
+		colorFunc = color.New(color.FgGreen).SprintFunc()
+	}
+	if trade.Profit != "" && cast.ToFloat64(trade.Profit) > 0 {
+		colorFunc = color.New(color.FgRed).SprintFunc()
+	}
+
+	rate := ""
+	if trade.ProfitRate != "" {
+		rate = fmt.Sprintf("%.2f%%", cast.ToFloat64(trade.ProfitRate)*100)
+	}
+	row := "%s \t %s \t %s \t %d \t %s    \t %s \t %s \t        %s \t %s \n"
+	blue.Printf(row, trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.ClosePrice, colorFunc(trade.Profit), colorFunc(rate))
 }
 
 var optionCloseCmd = &cobra.Command{
@@ -204,6 +215,30 @@ var optionCloseCmd = &cobra.Command{
 	},
 }
 
+var optionDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "删除",
+	Long:  `a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		var code string
+		if len(args) > 0 {
+			code = args[0]
+		}
+
+		optionTradeQuery.Code = code
+		// 默认值, cobra命令默认值没生效
+		if len(optionTradeQuery.StatusList) == 0 {
+			optionTradeQuery.StatusList = append(optionTradeQuery.StatusList, 1)
+		}
+
+		err := service.OptionTradeSvc.Delete(&optionTradeQuery)
+		if err != nil {
+			red.Printf("删除失败：%s\n", err.Error())
+			os.Exit(1)
+		}
+	},
+}
+
 var (
 	optionTradeQuery query.OptionTradeQuery
 )
@@ -222,6 +257,13 @@ func init() {
 
 	optionCloseCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
 	optionCmd.AddCommand(optionCloseCmd)
+
+	optionDeleteCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
+	optionDeleteCmd.Flags().StringVar(&optionTradeQuery.StartExerciseDate, "from", fmt.Sprint(time.Now().Format("060102")), "查询行权日范围，开始时间")
+	optionDeleteCmd.Flags().StringVar(&optionTradeQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
+	optionDeleteCmd.Flags().IntVar(&optionTradeQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
+	optionDeleteCmd.Flags().IntVar(&optionTradeQuery.PageNo, "pageNo", 1, "分页查询，页数")
+	optionCmd.AddCommand(optionDeleteCmd)
 
 	// Here you will define your flags and configuration settings.
 

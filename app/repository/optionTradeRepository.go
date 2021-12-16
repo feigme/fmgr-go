@@ -52,3 +52,10 @@ func (repo *OptionTradeRepository) Get(code string) (*models.OptionTrade, error)
 func (repo *OptionTradeRepository) Update(trade *models.OptionTrade) error {
 	return global.App.DB.Updates(&trade).Error
 }
+
+func (repo *OptionTradeRepository) Delete(trade *models.OptionTrade) error {
+	if trade.Id == 0 {
+		return errors.New("ID为空！")
+	}
+	return global.App.DB.Delete(&trade).Error
+}
