@@ -14,11 +14,11 @@ type OptionTradeRepository struct{}
 
 var OptionTradeRepo = new(OptionTradeRepository)
 
-func (o *OptionTradeRepository) Save(trade *models.OptionTrade) error {
+func (repo *OptionTradeRepository) Save(trade *models.OptionTrade) error {
 	return global.App.DB.Save(trade).Error
 }
 
-func (o *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
+func (repo *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
 	tx := global.App.DB
 	if query.Code != "" {
 		code := strings.ToUpper(query.Code)
@@ -40,7 +40,7 @@ func (o *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []mode
 	return list
 }
 
-func (o *OptionTradeRepository) Get(code string) (*models.OptionTrade, error) {
+func (repo *OptionTradeRepository) Get(code string) (*models.OptionTrade, error) {
 	var list []models.OptionTrade
 	global.App.DB.Where(fmt.Sprintf(" code = '%s' ", code)).Find(&list)
 	if len(list) == 0 {
@@ -49,6 +49,6 @@ func (o *OptionTradeRepository) Get(code string) (*models.OptionTrade, error) {
 	return &list[0], nil
 }
 
-func (o *OptionTradeRepository) Update(trade *models.OptionTrade) error {
+func (repo *OptionTradeRepository) Update(trade *models.OptionTrade) error {
 	return global.App.DB.Updates(&trade).Error
 }

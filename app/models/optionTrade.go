@@ -14,10 +14,11 @@ type OptionTrade struct {
 	ID
 	Timestamps
 	Option
-	Position   string `gorm:"type:varchar(64)"` // short or long
-	Price      string `gorm:"type:varchar(64)"` // 操作价格
-	ClosePrice string `gorm:"type:varchar(64)"` // 平仓价格
-	Profit     string `gorm:"type:varchar(64)"` // 收益
+	Position   string `gorm:"type:varchar(32)"` // short or long
+	Price      string `gorm:"type:varchar(32)"` // 操作价格
+	ClosePrice string `gorm:"type:varchar(32)"` // 平仓价格
+	Profit     string `gorm:"type:varchar(32)"` // 收益
+	ProfitRate string `gorm:"type:varchar(32)"` // 收益率
 	Count      int64  `gorm:"not null"`         // 数量
 	Premium    string `gorm:"not null"`         // 期权权利金
 	Status     int64  `gorm:"not null"`         // 状态
@@ -42,33 +43,32 @@ func NewOptionTrade(option *Option, optCreateEnum enum.OptionCreateEnum, price s
 	if err != nil {
 		return nil, errors.New("价格格式错误！")
 	}
-	trade.Price = price
-
+	trade.Price = fmt.Sprintf("%.2f", pricef)
+	trade.Status = int64(enum.OPTION_STATUS_HAVING)
 	// 新建option只有买和卖
 	if enum.LONG == optCreateEnum {
 		trade.Position = "long"
 		trade.Count = 1
+		// 买，损失权利金，负数
+		trade.Premium = fmt.Sprintf("%.2f", -pricef*float64(trade.ContractSize))
 	} else if enum.SHORT == optCreateEnum {
 		trade.Position = "short"
 		trade.Count = -1
+		// 卖，获得权利金，正数
+		trade.Premium = fmt.Sprintf("%.2f", pricef*float64(trade.ContractSize))
 	} else {
 		return nil, errors.New("期权操作类型错误！")
 	}
-	trade.Status = int64(enum.OPTION_STATUS_HAVING)
-	trade.Premium = fmt.Sprintf("%.0f", pricef*float64(trade.ContractSize)*float64(trade.Count))
 
 	return trade, nil
 }
 
-func (trade *OptionTrade) Close(optCloseEnum enum.OptionCloseEnum, price string) error {
+func (trade *OptionTrade) Close(price string) error {
 
 	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
 		return errors.New("该期权已经平仓或者失效！")
 	}
 
-	if optCloseEnum != enum.CLOSE {
-		return errors.New("操作类型错误！")
-	}
 	// 平仓
 	trade.Status = int64(enum.OPTION_STATUS_CLOSE)
 
@@ -76,27 +76,34 @@ func (trade *OptionTrade) Close(optCloseEnum enum.OptionCloseEnum, price string)
 	if err != nil {
 		return errors.New("价格格式错误！")
 	}
-	trade.ClosePrice = price
+	trade.ClosePrice = fmt.Sprintf("%.2f", pricef)
 
-	cnt := -float64(trade.Count)
-	trade.Profit = fmt.Sprintf("%.0f", cast.ToFloat64(trade.Premium)+pricef*cnt)
+	if trade.Position == "short" {
+		trade.Profit = fmt.Sprintf("%.2f", (cast.ToFloat64(trade.Price)-pricef)*float64(trade.ContractSize))
+		trade.ProfitRate = fmt.Sprintf("%.2f", (cast.ToFloat64(trade.Price)-pricef)/cast.ToFloat64(trade.Price))
+	} else if trade.Position == "long" {
+		trade.Profit = fmt.Sprintf("%.2f", (-cast.ToFloat64(trade.Price)+pricef)*float64(trade.ContractSize))
+		trade.ProfitRate = fmt.Sprintf("%.2f", (-cast.ToFloat64(trade.Price)+pricef)/cast.ToFloat64(trade.Price))
+	}
 
 	return nil
 
 }
 
-func (trade *OptionTrade) Invalid(optCloseEnum enum.OptionCloseEnum) error {
+func (trade *OptionTrade) Invalid() error {
 	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
 		return errors.New("该期权已经平仓或者失效！")
 	}
 
-	if optCloseEnum != enum.INVALID {
-		return errors.New("操作类型错误！")
-	}
-
 	// 失效
 	trade.Status = int64(enum.OPTION_STATUS_INVALID)
-	trade.ClosePrice = "0"
+	trade.ClosePrice = "0.00"
 	trade.Profit = trade.Premium
+	if trade.Position == "short" {
+		trade.ProfitRate = "1.00"
+	} else if trade.Position == "long" {
+		trade.ProfitRate = "-1.00"
+	}
+
 	return nil
 }

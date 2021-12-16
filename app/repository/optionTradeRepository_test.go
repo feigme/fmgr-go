@@ -35,10 +35,10 @@ func init() {
 	}
 }
 
-func TestSave(t *testing.T) {
+func TestSaveOption(t *testing.T) {
 	// mock
 	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO `option_trade`").WithArgs(test.AnyTime{}, test.AnyTime{}, "NIO211126P40000", "short", 40000, 0, "P", "NIO", "211126", 100, "", "1.52").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO `option_trade`").WithArgs(test.AnyTime{}, test.AnyTime{}, "NIO211126P40000", "NIO", "211126", "P", "40000", 100, "short", "1.52", "", "", "", -1, "152.00", 1).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
 	option, err := models.NewOption("NIO211126P40000")

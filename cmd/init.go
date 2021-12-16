@@ -52,7 +52,7 @@ to quickly create a Cobra application.`,
 		fmt.Println("初始化数据库")
 
 		// 初始化表
-		var models = []interface{}{&models.OptionTrade{}}
+		var models = []interface{}{&models.OptionTrade{}, &models.StockTrade{}}
 		bootstrap.InitMySqlTables(models...)
 
 	},

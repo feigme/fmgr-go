@@ -26,7 +26,7 @@ func init() {
 	// 3. 配置类型
 	v.SetConfigType("yaml")
 	if err := v.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("read config failed: %s \n", err))
+		fmt.Errorf("read config failed: %s \n", err)
 	}
 
 	// 监听配置文件
