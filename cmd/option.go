@@ -110,18 +110,12 @@ var optionListCmd = &cobra.Command{
     fmgr-go opst list baba // 查询期权带有baba关键字的
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var code string
+
 		if len(args) > 0 {
-			code = args[0]
+			optionListCmdQuery.Code = args[0]
 		}
 
-		optionTradeQuery.Code = code
-		// 默认值, cobra命令默认值没生效
-		if len(optionTradeQuery.StatusList) == 0 {
-			optionTradeQuery.StatusList = append(optionTradeQuery.StatusList, 1)
-		}
-
-		tradeList := service.OptionTradeSvc.List(&optionTradeQuery)
+		tradeList := service.OptionTradeSvc.List(&optionListCmdQuery)
 		if len(tradeList) == 0 {
 			red.Println("没有数据！")
 			os.Exit(1)
@@ -139,14 +133,13 @@ var optionCloseCmd = &cobra.Command{
 	Short: "期权平仓",
 	Long:  `a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			red.Println("选择要操作的期权code！")
-			os.Exit(1)
+
+		if len(args) > 0 {
+			optionCloseCmdQuery.Code = args[0]
 		}
 
 		var trade *models.OptionTrade
-		optionTradeQuery.Code = args[0]
-		tradeList := service.OptionTradeSvc.List(&optionTradeQuery)
+		tradeList := service.OptionTradeSvc.List(&optionCloseCmdQuery)
 		if len(tradeList) == 0 {
 			red.Println("没找到对应的期权！")
 			os.Exit(1)
@@ -212,14 +205,13 @@ var optionDeleteCmd = &cobra.Command{
 	Short: "删除",
 	Long:  `a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			red.Println("选择要操作的期权code！")
-			os.Exit(1)
+
+		if len(args) > 0 {
+			optionDeleteCmdQuery.Code = args[0]
 		}
 
 		var trade *models.OptionTrade
-		optionTradeQuery.Code = args[0]
-		tradeList := service.OptionTradeSvc.List(&optionTradeQuery)
+		tradeList := service.OptionTradeSvc.List(&optionDeleteCmdQuery)
 		if len(tradeList) == 0 {
 			red.Println("没找到对应的期权！")
 			os.Exit(1)
@@ -245,40 +237,44 @@ var optionDeleteCmd = &cobra.Command{
 			printOptionTableRow(trade)
 		}
 
-		err := service.OptionTradeSvc.Delete(trade.Id)
-		if err != nil {
-			red.Printf("删除失败：%s\n", err.Error())
-			os.Exit(1)
+		blue.Println("确认删除：(y/n)")
+		var confrim string
+		fmt.Scanln(&confrim)
+		if confrim == "y" {
+			err := service.OptionTradeSvc.Delete(trade.Id)
+			if err != nil {
+				red.Printf("删除失败：%s\n", err.Error())
+				os.Exit(1)
+			}
+			blue.Println("删除成功！")
 		}
-		blue.Println("删除成功！")
 	},
 }
 
 var (
-	optionTradeQuery query.OptionTradeQuery
+	optionListCmdQuery   query.OptionTradeQuery
+	optionCloseCmdQuery  query.OptionTradeQuery
+	optionDeleteCmdQuery query.OptionTradeQuery
 )
 
 func init() {
 	rootCmd.AddCommand(optionCmd)
-	optionCmd.AddCommand(optionCreateCmd)
 
-	// 初始化slice没有生效
-	optionListCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
-	optionListCmd.Flags().StringVar(&optionTradeQuery.StartExerciseDate, "from", fmt.Sprint(time.Now().Format("060102")), "查询行权日范围，开始时间")
-	optionListCmd.Flags().StringVar(&optionTradeQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
-	optionListCmd.Flags().IntVar(&optionTradeQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
-	optionListCmd.Flags().IntVar(&optionTradeQuery.PageNo, "pageNo", 1, "分页查询，页数")
-	optionCmd.AddCommand(optionListCmd)
+	optionListCmd.Flags().IntSliceVarP(&optionListCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
+	optionListCmd.Flags().StringVar(&optionListCmdQuery.StartExerciseDate, "from", fmt.Sprint(time.Now().Format("060102")), "查询行权日范围，开始时间")
+	optionListCmd.Flags().StringVar(&optionListCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
+	optionListCmd.Flags().IntVar(&optionListCmdQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
+	optionListCmd.Flags().IntVar(&optionListCmdQuery.PageNo, "pageNo", 1, "分页查询，页数")
 
-	optionCloseCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
-	optionCmd.AddCommand(optionCloseCmd)
+	optionCloseCmd.Flags().StringVar(&optionCloseCmdQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
+	optionCloseCmd.Flags().StringVar(&optionCloseCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
+	optionCloseCmd.Flags().IntSliceVarP(&optionCloseCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
 
-	optionDeleteCmd.Flags().IntSliceVarP(&optionTradeQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
-	optionDeleteCmd.Flags().StringVar(&optionTradeQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
-	optionDeleteCmd.Flags().StringVar(&optionTradeQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
-	optionDeleteCmd.Flags().IntVar(&optionTradeQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
-	optionDeleteCmd.Flags().IntVar(&optionTradeQuery.PageNo, "pageNo", 1, "分页查询，页数")
-	optionCmd.AddCommand(optionDeleteCmd)
+	optionDeleteCmd.Flags().IntSliceVarP(&optionDeleteCmdQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
+	optionDeleteCmd.Flags().StringVar(&optionDeleteCmdQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
+	optionDeleteCmd.Flags().StringVar(&optionDeleteCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
+
+	optionCmd.AddCommand(optionCreateCmd, optionListCmd, optionCloseCmd, optionDeleteCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -292,7 +288,7 @@ func init() {
 }
 
 func printOptionTableHead() {
-	blue.Println("ID \t 期权code         \t 操作 \t 价格 \t 数量 \t 权利金 \t 状态 \t 平仓价格 \t收益 \t 收益率")
+	blue.Printf("%-6v %-20v %-7v %-8v %-6v %-10v %-8v %-10v %-10v %-10v \n", "ID", "期权code", "操作", "价格", "数量", "权利金", "状态", "平仓价格", "收益", "收益率")
 }
 
 func printOptionTableRow(trade *models.OptionTrade) {
@@ -308,6 +304,6 @@ func printOptionTableRow(trade *models.OptionTrade) {
 	if trade.ProfitRate != "" {
 		rate = fmt.Sprintf("%.2f%%", cast.ToFloat64(trade.ProfitRate)*100)
 	}
-	row := "%d \t %s \t %s \t %s \t %d \t %s     \t %s \t %s \t        %s \t %s \n"
-	blue.Printf(row, trade.Id, trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.ClosePrice, colorFunc(trade.Profit), colorFunc(rate))
+
+	blue.Printf("%-6v %-22v %-9v %-10v %-8v %-13v %-8v %-14v %-21v %-21v \n", trade.Id, trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.ClosePrice, colorFunc(trade.Profit), colorFunc(rate))
 }
