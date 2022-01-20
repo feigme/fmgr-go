@@ -1,30 +1,37 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/feigme/fmgr-go/app/models"
 	"github.com/feigme/fmgr-go/app/query"
-	"github.com/feigme/fmgr-go/global"
+	"gorm.io/gorm"
 )
 
-type OptionTradeRepository struct{}
+type OptionTradeRepository struct {
+	db *gorm.DB
+}
 
-var OptionTradeRepo = new(OptionTradeRepository)
+func NewOptionTradeRepo(ctx context.Context) *OptionTradeRepository {
+	return &OptionTradeRepository{
+		db: GetDB(ctx),
+	}
+}
 
 func (repo *OptionTradeRepository) Save(trade *models.OptionTrade) error {
-	return global.App.DB.Save(trade).Error
+	return repo.db.Save(trade).Error
 }
 
 func (repo *OptionTradeRepository) GetById(id uint) (trade *models.OptionTrade, err error) {
-	err = global.App.DB.Where(" id = ? ", id).Find(&trade).Error
+	err = repo.db.Where(" id = ? ", id).Find(&trade).Error
 	return trade, err
 }
 
 func (repo *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
-	tx := global.App.DB
+	tx := repo.db
 	if query.Code != "" {
 		code := strings.ToUpper(query.Code)
 		tx = tx.Where(fmt.Sprintf(" code like '%%%s%%' ", code))
@@ -32,6 +39,10 @@ func (repo *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []m
 
 	if len(query.StatusList) > 0 {
 		tx = tx.Where(" status in (?)", query.StatusList)
+	}
+
+	if query.Position != "" {
+		tx = tx.Where(" position = ? ", query.Position)
 	}
 
 	if query.StartExerciseDate != "" {
@@ -47,19 +58,19 @@ func (repo *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []m
 
 func (repo *OptionTradeRepository) Get(code string) (*models.OptionTrade, error) {
 	var list []models.OptionTrade
-	global.App.DB.Where(fmt.Sprintf(" code = '%s' ", code)).Find(&list)
+	repo.db.Where(fmt.Sprintf(" code = '%s' ", code)).Find(&list)
 	if len(list) == 0 {
-		return nil, errors.New("期权code不存在！")
+		return nil, errors.New("期权code不存在! ")
 	}
 	return &list[0], nil
 }
 
 func (repo *OptionTradeRepository) Update(trade *models.OptionTrade) error {
-	return global.App.DB.Updates(&trade).Error
+	return repo.db.Updates(&trade).Error
 }
 
 func (repo *OptionTradeRepository) Delete(id uint) error {
 	trade := &models.OptionTrade{}
 	trade.Id = id
-	return global.App.DB.Delete(trade).Error
+	return repo.db.Delete(trade).Error
 }

@@ -3,462 +3,435 @@ package models
 import (
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+
 	"github.com/feigme/fmgr-go/app/enum"
-	"github.com/stretchr/testify/require"
 )
 
-func TestNewOptionTrade_卖call(t *testing.T) {
-	option, err := NewOption("TCH211230C500000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "8.0")
-	require.NoError(t, err)
+func TestNewOptionTrade(t *testing.T) {
+	Convey("单腿策略", t, func() {
+		Convey("卖call", func() {
+			trade, err := NewOptionTrade("TCH211230C500000", enum.SHORT, "8.0")
+			So(err, ShouldBeNil)
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230C500000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "500000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+			// 交易信息
+			So(trade.CreateTime, ShouldNotBeNil)
+			So(trade.UpdateTime, ShouldNotBeNil)
+			So(trade.Position, ShouldEqual, "short")
+			So(trade.SellPrice, ShouldEqual, "8.00")
+			So(trade.Count, ShouldEqual, int64(-1))
+			So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_HAVING))
+			So(trade.Premium, ShouldEqual, "800.00")
+			So(trade.BuyPrice, ShouldBeEmpty)
+			So(trade.Profit, ShouldBeEmpty)
+			So(trade.ProfitRate, ShouldBeEmpty)
+		})
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "8.00", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_HAVING), trade.Status)
-	require.Equal(t, "800.00", trade.Premium)
-	require.Empty(t, trade.ClosePrice)
-	require.Empty(t, trade.Profit)
-	require.Empty(t, trade.ProfitRate)
-}
+		Convey("卖call后，操作", func() {
+			Convey("失效", func() {
+				trade, err := NewOptionTrade("TCH211230C500000", enum.SHORT, "8.0")
+				So(err, ShouldBeNil)
 
-func TestNewOptionTrade_卖call_失效(t *testing.T) {
-	option, err := NewOption("TCH211230C500000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "8.0")
-	require.NoError(t, err)
+				trade.Invalid()
 
-	trade.Invalid()
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "short")
+				So(trade.SellPrice, ShouldEqual, "8.00")
+				So(trade.Count, ShouldEqual, int64(-1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_INVALID))
+				So(trade.Premium, ShouldEqual, "800.00")
+				So(trade.BuyPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "800.00")
+				So(trade.ProfitRate, ShouldEqual, "1.00")
+			})
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230C500000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "500000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+			Convey("行权", func() {
+				trade, err := NewOptionTrade("TCH211230C500000", enum.SHORT, "8.0")
+				So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "8.00", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_INVALID), trade.Status)
-	require.Equal(t, "800.00", trade.Premium)
-	require.Equal(t, "0.00", trade.ClosePrice)
-	require.Equal(t, "800.00", trade.Profit)
-	require.Equal(t, "1.00", trade.ProfitRate)
-}
+				trade.Exercise()
 
-func TestNewOptionTrade_卖call_平仓_盈(t *testing.T) {
-	option, err := NewOption("TCH211230C500000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "8.0")
-	require.NoError(t, err)
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "short")
+				So(trade.SellPrice, ShouldEqual, "8.00")
+				So(trade.Count, ShouldEqual, int64(-1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_EXERCISE))
+				So(trade.Premium, ShouldEqual, "800.00")
+				So(trade.BuyPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "800.00")
+				So(trade.ProfitRate, ShouldEqual, "1.00")
+			})
 
-	trade.Close("1.12")
+			Convey("平仓", func() {
+				Convey("盈利", func() {
+					trade, err := NewOptionTrade("TCH211230C500000", enum.SHORT, "8.0")
+					So(err, ShouldBeNil)
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230C500000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "500000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+					trade.Close("1.12")
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "8.00", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "800.00", trade.Premium)
-	require.Equal(t, "1.12", trade.ClosePrice)
-	require.Equal(t, "688.00", trade.Profit)
-	require.Equal(t, "0.86", trade.ProfitRate)
-}
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "short")
+					So(trade.SellPrice, ShouldEqual, "8.00")
+					So(trade.Count, ShouldEqual, int64(-1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "800.00")
+					So(trade.BuyPrice, ShouldEqual, "1.12")
+					So(trade.Profit, ShouldEqual, "688.00")
+					So(trade.ProfitRate, ShouldEqual, "0.86")
+				})
 
-func TestNewOptionTrade_卖call_平仓_亏(t *testing.T) {
-	option, err := NewOption("TCH211230C500000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "8.0")
-	require.NoError(t, err)
+				Convey("亏损", func() {
+					trade, err := NewOptionTrade("TCH211230C500000", enum.SHORT, "8.0")
+					So(err, ShouldBeNil)
 
-	trade.Close("11.2")
+					trade.Close("11.2")
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230C500000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "500000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "short")
+					So(trade.SellPrice, ShouldEqual, "8.00")
+					So(trade.Count, ShouldEqual, int64(-1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "800.00")
+					So(trade.BuyPrice, ShouldEqual, "11.20")
+					So(trade.Profit, ShouldEqual, "-320.00")
+					So(trade.ProfitRate, ShouldEqual, "-0.40")
+				})
+			})
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "8.00", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "800.00", trade.Premium)
-	require.Equal(t, "11.20", trade.ClosePrice)
-	require.Equal(t, "-320.00", trade.Profit)
-	require.Equal(t, "-0.40", trade.ProfitRate)
-}
+			Convey("roll", func() {
 
-func TestNewOptionTrade_卖put(t *testing.T) {
-	option, err := NewOption("TCH211230P450000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "12.1")
-	require.NoError(t, err)
+			})
+		})
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230P450000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "450000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+		Convey("卖put", func() {
+			trade, err := NewOptionTrade("TCH211230P450000", enum.SHORT, "12.1")
+			So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "12.10", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_HAVING), trade.Status)
-	require.Equal(t, "1210.00", trade.Premium)
-	require.Empty(t, trade.ClosePrice)
-	require.Empty(t, trade.Profit)
-	require.Empty(t, trade.ProfitRate)
-}
+			// 交易信息
+			So(trade.CreateTime, ShouldNotBeNil)
+			So(trade.UpdateTime, ShouldNotBeNil)
+			So(trade.Position, ShouldEqual, "short")
+			So(trade.SellPrice, ShouldEqual, "12.10")
+			So(trade.Count, ShouldEqual, int64(-1))
+			So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_HAVING))
+			So(trade.Premium, ShouldEqual, "1210.00")
+			So(trade.BuyPrice, ShouldBeEmpty)
+			So(trade.Profit, ShouldBeEmpty)
+			So(trade.ProfitRate, ShouldBeEmpty)
+		})
 
-func TestNewOptionTrade_卖put_失效(t *testing.T) {
-	option, err := NewOption("TCH211230P450000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "12.1")
-	require.NoError(t, err)
+		Convey("卖put后，操作", func() {
+			Convey("失效", func() {
+				trade, err := NewOptionTrade("TCH211230P450000", enum.SHORT, "12.1")
+				So(err, ShouldBeNil)
 
-	trade.Invalid()
+				trade.Invalid()
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230P450000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "450000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "short")
+				So(trade.SellPrice, ShouldEqual, "12.10")
+				So(trade.Count, ShouldEqual, int64(-1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_INVALID))
+				So(trade.Premium, ShouldEqual, "1210.00")
+				So(trade.BuyPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "1210.00")
+				So(trade.ProfitRate, ShouldEqual, "1.00")
+			})
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "12.10", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_INVALID), trade.Status)
-	require.Equal(t, "1210.00", trade.Premium)
-	require.Equal(t, "0.00", trade.ClosePrice)
-	require.Equal(t, "1210.00", trade.Profit)
-	require.Equal(t, "1.00", trade.ProfitRate)
-}
+			Convey("行权", func() {
+				trade, err := NewOptionTrade("TCH211230P450000", enum.SHORT, "12.1")
+				So(err, ShouldBeNil)
 
-func TestNewOptionTrade_卖put_亏(t *testing.T) {
-	option, err := NewOption("TCH211230P450000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "12.1")
-	require.NoError(t, err)
+				trade.Exercise()
 
-	trade.Close("16.1")
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "short")
+				So(trade.SellPrice, ShouldEqual, "12.10")
+				So(trade.Count, ShouldEqual, int64(-1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_EXERCISE))
+				So(trade.Premium, ShouldEqual, "1210.00")
+				So(trade.BuyPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "1210.00")
+				So(trade.ProfitRate, ShouldEqual, "1.00")
+			})
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230P450000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "450000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+			Convey("平仓", func() {
+				Convey("盈利", func() {
+					trade, err := NewOptionTrade("TCH211230P450000", enum.SHORT, "12.1")
+					So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "12.10", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "1210.00", trade.Premium)
-	require.Equal(t, "16.10", trade.ClosePrice)
-	require.Equal(t, "-400.00", trade.Profit)
-	require.Equal(t, "-0.33", trade.ProfitRate)
-}
+					trade.Close("0.3")
 
-func TestNewOptionTrade_卖put_盈(t *testing.T) {
-	option, err := NewOption("TCH211230P450000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.SHORT, "12.1")
-	require.NoError(t, err)
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "short")
+					So(trade.SellPrice, ShouldEqual, "12.10")
+					So(trade.Count, ShouldEqual, int64(-1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "1210.00")
+					So(trade.BuyPrice, ShouldEqual, "0.30")
+					So(trade.Profit, ShouldEqual, "1180.00")
+					So(trade.ProfitRate, ShouldEqual, "0.98")
+				})
+				Convey("亏损", func() {
+					trade, err := NewOptionTrade("TCH211230P450000", enum.SHORT, "12.1")
+					So(err, ShouldBeNil)
 
-	trade.Close("0.3")
+					trade.Close("16.1")
 
-	// 验证期权基本信息
-	require.Equal(t, "TCH211230P450000", trade.Code)
-	require.Equal(t, "TCH", trade.Stock)
-	require.Equal(t, "211230", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "450000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "short")
+					So(trade.SellPrice, ShouldEqual, "12.10")
+					So(trade.Count, ShouldEqual, int64(-1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "1210.00")
+					So(trade.BuyPrice, ShouldEqual, "16.10")
+					So(trade.Profit, ShouldEqual, "-400.00")
+					So(trade.ProfitRate, ShouldEqual, "-0.33")
+				})
+			})
+		})
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "short", trade.Position)
-	require.Equal(t, "12.10", trade.Price)
-	require.Equal(t, int64(-1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "1210.00", trade.Premium)
-	require.Equal(t, "0.30", trade.ClosePrice)
-	require.Equal(t, "1180.00", trade.Profit)
-	require.Equal(t, "0.98", trade.ProfitRate)
-}
+		Convey("买call", func() {
+			trade, err := NewOptionTrade("bili211217C70000", enum.LONG, "0.34")
+			So(err, ShouldBeNil)
 
-func TestNewOptionTrade_买call(t *testing.T) {
-	option, err := NewOption("bili211217C70000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "0.34")
-	require.NoError(t, err)
+			// 交易信息
+			So(trade.CreateTime, ShouldNotBeNil)
+			So(trade.UpdateTime, ShouldNotBeNil)
+			So(trade.Position, ShouldEqual, "long")
+			So(trade.BuyPrice, ShouldEqual, "0.34")
+			So(trade.Count, ShouldEqual, int64(1))
+			So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_HAVING))
+			So(trade.Premium, ShouldEqual, "-34.00")
+			So(trade.SellPrice, ShouldBeEmpty)
+			So(trade.Profit, ShouldBeEmpty)
+			So(trade.ProfitRate, ShouldBeEmpty)
+		})
 
-	// 验证期权基本信息
-	require.Equal(t, "BILI211217C70000", trade.Code)
-	require.Equal(t, "BILI", trade.Stock)
-	require.Equal(t, "211217", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "70000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+		Convey("买call，操作", func() {
+			Convey("失效", func() {
+				trade, err := NewOptionTrade("bili211217C70000", enum.LONG, "0.34")
+				So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "0.34", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_HAVING), trade.Status)
-	require.Equal(t, "-34.00", trade.Premium)
-	require.Empty(t, trade.ClosePrice)
-	require.Empty(t, trade.Profit)
-	require.Empty(t, trade.ProfitRate)
-}
+				trade.Invalid()
 
-func TestNewOptionTrade_买call_失效(t *testing.T) {
-	option, err := NewOption("bili211217C70000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "0.34")
-	require.NoError(t, err)
+				// 验证期权基本信息
+				So(trade.Code, ShouldEqual, "BILI211217C70000")
+				So(trade.Stock, ShouldEqual, "BILI")
+				So(trade.ExerciseDate, ShouldEqual, "211217")
+				So(trade.Type, ShouldEqual, "C")
+				So(trade.StrikePrice, ShouldEqual, "70000")
+				So(trade.ContractSize, ShouldEqual, int64(100))
 
-	trade.Invalid()
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "long")
+				So(trade.BuyPrice, ShouldEqual, "0.34")
+				So(trade.Count, ShouldEqual, int64(1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_INVALID))
+				So(trade.Premium, ShouldEqual, "-34.00")
+				So(trade.SellPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "-34.00")
+				So(trade.ProfitRate, ShouldEqual, "-1.00")
+			})
 
-	// 验证期权基本信息
-	require.Equal(t, "BILI211217C70000", trade.Code)
-	require.Equal(t, "BILI", trade.Stock)
-	require.Equal(t, "211217", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "70000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+			Convey("行权", func() {
+				trade, err := NewOptionTrade("bili211217C70000", enum.LONG, "0.34")
+				So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "0.34", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_INVALID), trade.Status)
-	require.Equal(t, "-34.00", trade.Premium)
-	require.Equal(t, "0.00", trade.ClosePrice)
-	require.Equal(t, "-34.00", trade.Profit)
-	require.Equal(t, "-1.00", trade.ProfitRate)
-}
+				trade.Exercise()
 
-func TestNewOptionTrade_买call_赢(t *testing.T) {
-	option, err := NewOption("bili211217C70000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "0.34")
-	require.NoError(t, err)
+				// 验证期权基本信息
+				So(trade.Code, ShouldEqual, "BILI211217C70000")
+				So(trade.Stock, ShouldEqual, "BILI")
+				So(trade.ExerciseDate, ShouldEqual, "211217")
+				So(trade.Type, ShouldEqual, "C")
+				So(trade.StrikePrice, ShouldEqual, "70000")
+				So(trade.ContractSize, ShouldEqual, int64(100))
 
-	trade.Close("5.1")
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "long")
+				So(trade.BuyPrice, ShouldEqual, "0.34")
+				So(trade.Count, ShouldEqual, int64(1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_EXERCISE))
+				So(trade.Premium, ShouldEqual, "-34.00")
+				So(trade.SellPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "-34.00")
+				So(trade.ProfitRate, ShouldEqual, "-1.00")
+			})
 
-	// 验证期权基本信息
-	require.Equal(t, "BILI211217C70000", trade.Code)
-	require.Equal(t, "BILI", trade.Stock)
-	require.Equal(t, "211217", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "70000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+			Convey("平仓", func() {
+				Convey("盈利", func() {
+					trade, err := NewOptionTrade("bili211217C70000", enum.LONG, "0.34")
+					So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "0.34", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "-34.00", trade.Premium)
-	require.Equal(t, "5.10", trade.ClosePrice)
-	require.Equal(t, "476.00", trade.Profit)
-	require.Equal(t, "14.00", trade.ProfitRate)
-}
+					trade.Close("5.1")
 
-func TestNewOptionTrade_买call_亏(t *testing.T) {
-	option, err := NewOption("bili211217C70000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "0.34")
-	require.NoError(t, err)
+					// 验证期权基本信息
+					So(trade.Code, ShouldEqual, "BILI211217C70000")
+					So(trade.Stock, ShouldEqual, "BILI")
+					So(trade.ExerciseDate, ShouldEqual, "211217")
+					So(trade.Type, ShouldEqual, "C")
+					So(trade.StrikePrice, ShouldEqual, "70000")
+					So(trade.ContractSize, ShouldEqual, int64(100))
 
-	trade.Close("0.1")
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "long")
+					So(trade.BuyPrice, ShouldEqual, "0.34")
+					So(trade.Count, ShouldEqual, int64(1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "-34.00")
+					So(trade.SellPrice, ShouldEqual, "5.10")
+					So(trade.Profit, ShouldEqual, "476.00")
+					So(trade.ProfitRate, ShouldEqual, "14.00")
+				})
 
-	// 验证期权基本信息
-	require.Equal(t, "BILI211217C70000", trade.Code)
-	require.Equal(t, "BILI", trade.Stock)
-	require.Equal(t, "211217", trade.ExerciseDate)
-	require.Equal(t, "C", trade.Type)
-	require.Equal(t, "70000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+				Convey("亏损", func() {
+					trade, err := NewOptionTrade("bili211217C70000", enum.LONG, "0.34")
+					So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "0.34", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "-34.00", trade.Premium)
-	require.Equal(t, "0.10", trade.ClosePrice)
-	require.Equal(t, "-24.00", trade.Profit)
-	require.Equal(t, "-0.71", trade.ProfitRate)
-}
+					trade.Close("0.1")
 
-func TestNewOptionTrade_买put(t *testing.T) {
-	option, err := NewOption("futu211210P47000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "1.6")
-	require.NoError(t, err)
+					// 验证期权基本信息
+					So(trade.Code, ShouldEqual, "BILI211217C70000")
+					So(trade.Stock, ShouldEqual, "BILI")
+					So(trade.ExerciseDate, ShouldEqual, "211217")
+					So(trade.Type, ShouldEqual, "C")
+					So(trade.StrikePrice, ShouldEqual, "70000")
+					So(trade.ContractSize, ShouldEqual, int64(100))
 
-	// 验证期权基本信息
-	require.Equal(t, "FUTU211210P47000", trade.Code)
-	require.Equal(t, "FUTU", trade.Stock)
-	require.Equal(t, "211210", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "47000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "long")
+					So(trade.BuyPrice, ShouldEqual, "0.34")
+					So(trade.Count, ShouldEqual, int64(1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "-34.00")
+					So(trade.SellPrice, ShouldEqual, "0.10")
+					So(trade.Profit, ShouldEqual, "-24.00")
+					So(trade.ProfitRate, ShouldEqual, "-0.71")
+				})
+			})
+		})
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "1.60", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_HAVING), trade.Status)
-	require.Equal(t, "-160.00", trade.Premium)
-	require.Empty(t, trade.ClosePrice)
-	require.Empty(t, trade.Profit)
-	require.Empty(t, trade.ProfitRate)
-}
+		Convey("买put", func() {
+			trade, err := NewOptionTrade("futu211210P47000", enum.LONG, "1.6")
+			So(err, ShouldBeNil)
 
-func TestNewOptionTrade_买put_失效(t *testing.T) {
-	option, err := NewOption("futu211210P47000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "1.6")
-	require.NoError(t, err)
+			// 交易信息
+			So(trade.CreateTime, ShouldNotBeNil)
+			So(trade.UpdateTime, ShouldNotBeNil)
+			So(trade.Position, ShouldEqual, "long")
+			So(trade.BuyPrice, ShouldEqual, "1.60")
+			So(trade.Count, ShouldEqual, int64(1))
+			So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_HAVING))
+			So(trade.Premium, ShouldEqual, "-160.00")
+			So(trade.SellPrice, ShouldBeEmpty)
+			So(trade.Profit, ShouldBeEmpty)
+			So(trade.ProfitRate, ShouldBeEmpty)
+		})
 
-	trade.Invalid()
+		Convey("买put后，操作", func() {
+			Convey("失效", func() {
+				trade, err := NewOptionTrade("futu211210P47000", enum.LONG, "1.6")
+				So(err, ShouldBeNil)
 
-	// 验证期权基本信息
-	require.Equal(t, "FUTU211210P47000", trade.Code)
-	require.Equal(t, "FUTU", trade.Stock)
-	require.Equal(t, "211210", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "47000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+				trade.Invalid()
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "1.60", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_INVALID), trade.Status)
-	require.Equal(t, "-160.00", trade.Premium)
-	require.Equal(t, "0.00", trade.ClosePrice)
-	require.Equal(t, "-160.00", trade.Profit)
-	require.Equal(t, "-1.00", trade.ProfitRate)
-}
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "long")
+				So(trade.BuyPrice, ShouldEqual, "1.60")
+				So(trade.Count, ShouldEqual, int64(1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_INVALID))
+				So(trade.Premium, ShouldEqual, "-160.00")
+				So(trade.SellPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "-160.00")
+				So(trade.ProfitRate, ShouldEqual, "-1.00")
+			})
 
-func TestNewOptionTrade_买put_盈(t *testing.T) {
-	option, err := NewOption("futu211210P47000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "1.6")
-	require.NoError(t, err)
+			Convey("行权", func() {
+				trade, err := NewOptionTrade("futu211210P47000", enum.LONG, "1.6")
+				So(err, ShouldBeNil)
 
-	trade.Close("3")
+				trade.Exercise()
 
-	// 验证期权基本信息
-	require.Equal(t, "FUTU211210P47000", trade.Code)
-	require.Equal(t, "FUTU", trade.Stock)
-	require.Equal(t, "211210", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "47000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+				// 交易信息
+				So(trade.CreateTime, ShouldNotBeNil)
+				So(trade.UpdateTime, ShouldNotBeNil)
+				So(trade.Position, ShouldEqual, "long")
+				So(trade.BuyPrice, ShouldEqual, "1.60")
+				So(trade.Count, ShouldEqual, int64(1))
+				So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_EXERCISE))
+				So(trade.Premium, ShouldEqual, "-160.00")
+				So(trade.SellPrice, ShouldEqual, "0.00")
+				So(trade.Profit, ShouldEqual, "-160.00")
+				So(trade.ProfitRate, ShouldEqual, "-1.00")
+			})
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "1.60", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "-160.00", trade.Premium)
-	require.Equal(t, "3.00", trade.ClosePrice)
-	require.Equal(t, "140.00", trade.Profit)
-	require.Equal(t, "0.87", trade.ProfitRate)
-}
+			Convey("平仓", func() {
+				Convey("盈利", func() {
+					trade, err := NewOptionTrade("futu211210P47000", enum.LONG, "1.6")
+					So(err, ShouldBeNil)
 
-func TestNewOptionTrade_买put_亏(t *testing.T) {
-	option, err := NewOption("futu211210P47000")
-	require.NoError(t, err)
-	trade, err := NewOptionTrade(option, enum.LONG, "1.6")
-	require.NoError(t, err)
+					trade.Close("3")
 
-	trade.Close("0.6")
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "long")
+					So(trade.BuyPrice, ShouldEqual, "1.60")
+					So(trade.Count, ShouldEqual, int64(1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "-160.00")
+					So(trade.SellPrice, ShouldEqual, "3.00")
+					So(trade.Profit, ShouldEqual, "140.00")
+					So(trade.ProfitRate, ShouldEqual, "0.87")
+				})
 
-	// 验证期权基本信息
-	require.Equal(t, "FUTU211210P47000", trade.Code)
-	require.Equal(t, "FUTU", trade.Stock)
-	require.Equal(t, "211210", trade.ExerciseDate)
-	require.Equal(t, "P", trade.Type)
-	require.Equal(t, "47000", trade.StrikePrice)
-	require.Equal(t, int64(100), trade.ContractSize)
+				Convey("亏损", func() {
+					trade, err := NewOptionTrade("futu211210P47000", enum.LONG, "1.6")
+					So(err, ShouldBeNil)
 
-	// 交易信息
-	require.NotNil(t, trade.CreateTime)
-	require.NotNil(t, trade.UpdateTime)
-	require.Equal(t, "long", trade.Position)
-	require.Equal(t, "1.60", trade.Price)
-	require.Equal(t, int64(1), trade.Count)
-	require.Equal(t, int64(enum.OPTION_STATUS_CLOSE), trade.Status)
-	require.Equal(t, "-160.00", trade.Premium)
-	require.Equal(t, "0.60", trade.ClosePrice)
-	require.Equal(t, "-100.00", trade.Profit)
-	require.Equal(t, "-0.62", trade.ProfitRate)
+					trade.Close("0.6")
+
+					// 交易信息
+					So(trade.CreateTime, ShouldNotBeNil)
+					So(trade.UpdateTime, ShouldNotBeNil)
+					So(trade.Position, ShouldEqual, "long")
+					So(trade.BuyPrice, ShouldEqual, "1.60")
+					So(trade.Count, ShouldEqual, int64(1))
+					So(trade.Status, ShouldEqual, int64(enum.OPTION_STATUS_CLOSE))
+					So(trade.Premium, ShouldEqual, "-160.00")
+					So(trade.SellPrice, ShouldEqual, "0.60")
+					So(trade.Profit, ShouldEqual, "-100.00")
+					So(trade.ProfitRate, ShouldEqual, "-0.62")
+				})
+			})
+		})
+	})
+
 }

@@ -7,4 +7,5 @@ type OptionTradeQuery struct {
 	StatusList        []int
 	StartExerciseDate string
 	EndExerciseDate   string
+	Position          string
 }

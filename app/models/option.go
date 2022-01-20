@@ -19,16 +19,24 @@ var (
 	reg = regexp.MustCompile(`^([A-Za-z]{1,4})(\d{6})([pPcC]{1})(\d{5,6})$`)
 )
 
-func NewOption(code string) (*Option, error) {
+func CheckOptionCode(code string) (string, error) {
 	if code == "" {
-		return nil, errors.New("期权code不能为空！")
+		return "", errors.New("期权code不能为空！")
 	}
 
 	// code转成大写
 	code = strings.ToUpper(code)
 	err := reg.MatchString(code)
 	if !err {
-		return nil, errors.New("期权code格式错误！")
+		return "", errors.New("期权code格式错误！")
+	}
+	return code, nil
+}
+
+func NewOption(code string) (*Option, error) {
+	code, err := CheckOptionCode(code)
+	if err != nil {
+		return nil, err
 	}
 
 	regResult := reg.FindStringSubmatch(code)

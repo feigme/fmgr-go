@@ -7,7 +7,10 @@
 1. 文件命名
 这点有点不同，建议采用习惯的驼峰规则命名
 
+2. 单元测试
+GoStub+GoConvey+GoMock
 
+go get github.com/smartystreets/goconvey
 
 ## 目录结构
 app/common公共模块（请求、响应结构体等）

@@ -8,13 +8,15 @@ import (
 type OptionCloseEnum int
 
 const (
-	CLOSE   OptionCloseEnum = 3  // 平仓
-	INVALID OptionCloseEnum = -1 // 失效
+	OPTION_OPS_CLOSE    OptionCloseEnum = 3  // 平仓
+	OPTION_OPS_INVALID  OptionCloseEnum = -1 // 失效
+	OPTION_OPS_EXERCISE OptionCloseEnum = 4  // 行权
 )
 
 var optionCloseEnumMap = map[OptionCloseEnum]string{
-	CLOSE:   "平仓",
-	INVALID: "失效",
+	OPTION_OPS_CLOSE:    "平仓",
+	OPTION_OPS_INVALID:  "失效",
+	OPTION_OPS_EXERCISE: "行权",
 }
 
 func (o OptionCloseEnum) Desc() string {

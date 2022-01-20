@@ -51,17 +51,17 @@ var optionCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// 期权code
-		blue.Println("请输入期权code：")
+		blue.Println("请输入期权code: ")
 		var code string
 		fmt.Scanln(&code)
 		option, err := models.NewOption(code)
 		if err != nil {
-			red.Printf("输入期权code错误：%s\n", err.Error())
+			red.Printf("输入期权code错误: %s\n", err.Error())
 			os.Exit(1)
 		}
 
 		// 期权操作
-		blue.Println("请选择操作序号：")
+		blue.Println("请选择操作序号: ")
 		km := make([]enum.KeyMap, 0)
 		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.LONG.Desc()), Val: int(enum.LONG)})
 		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.SHORT.Desc()), Val: int(enum.SHORT)})
@@ -72,33 +72,33 @@ var optionCreateCmd = &cobra.Command{
 		fmt.Scanln(&ops)
 		operate := enum.OptionCreateEnum(ops)
 		if operate != enum.LONG && operate != enum.SHORT {
-			red.Printf("输入操作错误！\n")
+			red.Printf("输入操作错误! \n")
 			os.Exit(1)
 		}
 
 		// 操作价格
-		blue.Println("请输入价格：")
+		blue.Println("请输入价格: ")
 		var price string
 		fmt.Scanln(&price)
 
 		// 数量
-		blue.Println("请输入数量：")
+		blue.Println("请输入数量: ")
 		var count int
 		fmt.Scanln(&count)
 
 		for i := 0; i < count; i++ {
-			trade, err := models.NewOptionTrade(option, operate, price)
+			trade, err := models.NewOptionTrade(code, operate, price)
 			if err != nil {
-				red.Printf("输入价格错误：%s\n", err.Error())
+				red.Printf("输入价格错误: %s\n", err.Error())
 				os.Exit(1)
 			}
 			err = service.OptionTradeSvc.Save(trade)
 			if err != nil {
-				red.Printf("创建错误：%s\n", err.Error())
+				red.Printf("创建错误: %s\n", err.Error())
 				os.Exit(1)
 			}
 		}
-		blue.Printf("期权code：%s，操作：%s，价格：%s，数量：%d \n", option.Code, operate.Desc(), price, count)
+		blue.Printf("期权code: %s，操作: %s，价格: %s，数量: %d \n", option.Code, operate.Desc(), price, count)
 	},
 }
 
@@ -106,7 +106,7 @@ var optionListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "期权列表",
 	Long: `查询期权列表，可根据code模糊查询.
-  例子：
+  例子: 
     fmgr-go opst list baba // 查询期权带有baba关键字的
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -117,7 +117,7 @@ var optionListCmd = &cobra.Command{
 
 		tradeList := service.OptionTradeSvc.List(&optionListCmdQuery)
 		if len(tradeList) == 0 {
-			red.Println("没有数据！")
+			red.Println("没有数据! ")
 			os.Exit(1)
 		}
 
@@ -141,20 +141,20 @@ var optionCloseCmd = &cobra.Command{
 		var trade *models.OptionTrade
 		tradeList := service.OptionTradeSvc.List(&optionCloseCmdQuery)
 		if len(tradeList) == 0 {
-			red.Println("没找到对应的期权！")
+			red.Println("没找到对应的期权! ")
 			os.Exit(1)
 		} else if len(tradeList) > 1 {
 			printOptionTableHead()
 			for _, v := range tradeList {
 				printOptionTableRow(&v)
 			}
-			blue.Println("找到多个期权，请筛选ID：")
+			blue.Println("找到多个期权，请筛选ID: ")
 			id := 0
 			fmt.Scanln(&id)
 
 			t, err := service.OptionTradeSvc.GetById(uint(id))
 			if err != nil {
-				red.Printf("系统错误！\n")
+				red.Printf("系统错误! \n")
 				os.Exit(1)
 			}
 			trade = t
@@ -166,35 +166,40 @@ var optionCloseCmd = &cobra.Command{
 		}
 
 		// 选择操作
-		blue.Println("请选择操作序号：")
+		blue.Println("请选择操作序号: ")
 		km := make([]enum.KeyMap, 0)
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.CLOSE.Desc()), Val: int(enum.CLOSE)})
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.INVALID.Desc()), Val: int(enum.INVALID)})
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.OPTION_OPS_CLOSE.Desc()), Val: int(enum.OPTION_OPS_CLOSE)})
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.OPTION_OPS_INVALID.Desc()), Val: int(enum.OPTION_OPS_INVALID)})
+		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.OPTION_OPS_EXERCISE.Desc()), Val: int(enum.OPTION_OPS_EXERCISE)})
 		for _, v := range km {
 			blue.Printf("  %d: %s\n", v.Val, v.Key)
 		}
 		var ops int
 		fmt.Scanln(&ops)
 		operate := enum.OptionCloseEnum(ops)
-		if operate != enum.CLOSE && operate != enum.INVALID {
-			red.Printf("输入操作错误！\n")
+		if operate != enum.OPTION_OPS_CLOSE && operate != enum.OPTION_OPS_INVALID && operate != enum.OPTION_OPS_EXERCISE {
+			red.Printf("输入操作错误! \n")
 			os.Exit(1)
 		}
 
 		// 平仓
-		if operate == enum.CLOSE {
+		if operate == enum.OPTION_OPS_CLOSE {
 			// 操作价格
-			blue.Println("请输入价格：")
+			blue.Println("请输入价格: ")
 			var price string
 			fmt.Scanln(&price)
 
 			trade.Close(price)
-			service.OptionTradeSvc.Close(trade)
-			blue.Printf("期权code：%s，操作：%s\n", trade.Code, operate.Desc())
-		} else if operate == enum.INVALID {
+			service.OptionTradeSvc.Update(trade)
+			blue.Printf("操作成功! \n")
+		} else if operate == enum.OPTION_OPS_INVALID {
 			trade.Invalid()
-			service.OptionTradeSvc.Close(trade)
-			blue.Printf("期权code：%s，操作：%s，价格：%s\n", trade.Code, operate.Desc(), trade.ClosePrice)
+			service.OptionTradeSvc.Update(trade)
+			blue.Printf("操作成功! \n")
+		} else if operate == enum.OPTION_OPS_EXERCISE {
+			trade.Exercise()
+			service.OptionTradeSvc.Update(trade)
+			blue.Printf("操作成功! \n")
 		}
 
 	},
@@ -213,20 +218,20 @@ var optionDeleteCmd = &cobra.Command{
 		var trade *models.OptionTrade
 		tradeList := service.OptionTradeSvc.List(&optionDeleteCmdQuery)
 		if len(tradeList) == 0 {
-			red.Println("没找到对应的期权！")
+			red.Println("没找到对应的期权! ")
 			os.Exit(1)
 		} else if len(tradeList) > 1 {
 			printOptionTableHead()
 			for _, v := range tradeList {
 				printOptionTableRow(&v)
 			}
-			blue.Println("找到多个期权，请筛选ID：")
+			blue.Println("找到多个期权，请筛选ID: ")
 			id := 0
 			fmt.Scanln(&id)
 
 			t, err := service.OptionTradeSvc.GetById(uint(id))
 			if err != nil {
-				red.Printf("系统错误！\n")
+				red.Printf("系统错误! \n")
 				os.Exit(1)
 			}
 			trade = t
@@ -237,16 +242,16 @@ var optionDeleteCmd = &cobra.Command{
 			printOptionTableRow(trade)
 		}
 
-		blue.Println("确认删除：(y/n)")
+		blue.Println("确认删除: (y/n)")
 		var confrim string
 		fmt.Scanln(&confrim)
 		if confrim == "y" {
 			err := service.OptionTradeSvc.Delete(trade.Id)
 			if err != nil {
-				red.Printf("删除失败：%s\n", err.Error())
+				red.Printf("删除失败: %s\n", err.Error())
 				os.Exit(1)
 			}
-			blue.Println("删除成功！")
+			blue.Println("删除成功! ")
 		}
 	},
 }
@@ -260,7 +265,7 @@ var (
 func init() {
 	rootCmd.AddCommand(optionCmd)
 
-	optionListCmd.Flags().IntSliceVarP(&optionListCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
+	optionListCmd.Flags().IntSliceVarP(&optionListCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1: 持仓，2: 平仓，-1: 失效")
 	optionListCmd.Flags().StringVar(&optionListCmdQuery.StartExerciseDate, "from", fmt.Sprint(time.Now().Format("060102")), "查询行权日范围，开始时间")
 	optionListCmd.Flags().StringVar(&optionListCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
 	optionListCmd.Flags().IntVar(&optionListCmdQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
@@ -268,9 +273,9 @@ func init() {
 
 	optionCloseCmd.Flags().StringVar(&optionCloseCmdQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
 	optionCloseCmd.Flags().StringVar(&optionCloseCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
-	optionCloseCmd.Flags().IntSliceVarP(&optionCloseCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1：持仓，2：平仓，-1：失效")
+	optionCloseCmd.Flags().IntSliceVarP(&optionCloseCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1: 持仓，2: 平仓，-1: 失效")
 
-	optionDeleteCmd.Flags().IntSliceVarP(&optionDeleteCmdQuery.StatusList, "status", "s", []int{}, "选择状态，1：持仓，2：平仓，-1：失效")
+	optionDeleteCmd.Flags().IntSliceVarP(&optionDeleteCmdQuery.StatusList, "status", "s", []int{}, "选择状态，1: 持仓，2: 平仓，-1: 失效")
 	optionDeleteCmd.Flags().StringVar(&optionDeleteCmdQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
 	optionDeleteCmd.Flags().StringVar(&optionDeleteCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
 
@@ -288,7 +293,7 @@ func init() {
 }
 
 func printOptionTableHead() {
-	blue.Printf("%-6v %-20v %-7v %-8v %-6v %-10v %-8v %-10v %-10v %-10v \n", "ID", "期权code", "操作", "价格", "数量", "权利金", "状态", "平仓价格", "收益", "收益率")
+	blue.Printf("%-6v %-20v %-7v %-8v %-6v %-10v %-8v %-11v %-10v \n", "ID", "期权code", "操作", "数量", "买价", "卖价", "状态", "收益", "收益率")
 }
 
 func printOptionTableRow(trade *models.OptionTrade) {
@@ -305,5 +310,5 @@ func printOptionTableRow(trade *models.OptionTrade) {
 		rate = fmt.Sprintf("%.2f%%", cast.ToFloat64(trade.ProfitRate)*100)
 	}
 
-	blue.Printf("%-6v %-22v %-9v %-10v %-8v %-13v %-8v %-14v %-21v %-21v \n", trade.Id, trade.Code, trade.Position, trade.Price, trade.Count, trade.Premium, enum.OptionStatusEnum(trade.Status).Desc(), trade.ClosePrice, colorFunc(trade.Profit), colorFunc(rate))
+	blue.Printf("%-6v %-22v %-9v %-10v %-8v %-14v %-8v %-22v %-21v \n", trade.Id, trade.Code, trade.Position, trade.Count, trade.BuyPrice, trade.SellPrice, enum.OptionStatusEnum(trade.Status).Desc(), colorFunc(trade.Profit), colorFunc(rate))
 }
