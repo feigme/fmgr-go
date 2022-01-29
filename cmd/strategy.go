@@ -16,11 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/feigme/fmgr-go/app/enum"
-	"github.com/feigme/fmgr-go/app/models/strategy"
 	"github.com/spf13/cobra"
 )
 
@@ -31,29 +26,7 @@ var strategyCmd = &cobra.Command{
 	Long:  `a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		blue.Println("请选择策略Id: ")
-		for _, v := range enum.OptionStEnumList() {
-			blue.Printf("  %d: %-20v %s\n", v.Key, v.Code, v.Desc)
-		}
 
-		var stId int
-		fmt.Scanln(&stId)
-		OptionStrategyEnum, err := enum.GetOptionStEnumByKey(stId)
-		if err != nil {
-			red.Printf("%s! \n", err)
-			os.Exit(1)
-		}
-
-		// 不同策略不同交互提示
-		if OptionStrategyEnum == enum.OST_Naked_Short_Put {
-			param := &strategy.NakedShortPut{}
-			err = param.Hci()
-			if err != nil {
-				red.Printf("%s! \n", err)
-				os.Exit(1)
-			}
-			
-			blue.Println("操作成功! ")
-		}
 	},
 }
 

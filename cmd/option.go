@@ -39,64 +39,6 @@ var optionCmd = &cobra.Command{
 	},
 }
 
-var optionCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "创建期权",
-	Long:  `a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		// 期权code
-		blue.Println("请输入期权code: ")
-		var code string
-		fmt.Scanln(&code)
-		option, err := models.NewOption(code)
-		if err != nil {
-			red.Printf("输入期权code错误: %s\n", err.Error())
-			os.Exit(1)
-		}
-
-		// 期权操作
-		blue.Println("请选择操作序号: ")
-		km := make([]enum.KeyMap, 0)
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.LONG.Desc()), Val: int(enum.LONG)})
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.SHORT.Desc()), Val: int(enum.SHORT)})
-		for _, v := range km {
-			blue.Printf("  %d: %s\n", v.Val, v.Key)
-		}
-		var ops int
-		fmt.Scanln(&ops)
-		operate := enum.OptionCreateEnum(ops)
-		if operate != enum.LONG && operate != enum.SHORT {
-			red.Printf("输入操作错误! \n")
-			os.Exit(1)
-		}
-
-		// 操作价格
-		blue.Println("请输入价格: ")
-		var price string
-		fmt.Scanln(&price)
-
-		// 数量
-		blue.Println("请输入数量: ")
-		var count int
-		fmt.Scanln(&count)
-
-		for i := 0; i < count; i++ {
-			trade, err := models.NewOptionTrade(code, operate, price)
-			if err != nil {
-				red.Printf("输入价格错误: %s\n", err.Error())
-				os.Exit(1)
-			}
-			err = service.OptionTradeSvc.Save(trade)
-			if err != nil {
-				red.Printf("创建错误: %s\n", err.Error())
-				os.Exit(1)
-			}
-		}
-		blue.Printf("期权code: %s，操作: %s，价格: %s，数量: %d \n", option.Code, operate.Desc(), price, count)
-	},
-}
-
 var optionListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "期权列表",
@@ -123,134 +65,6 @@ var optionListCmd = &cobra.Command{
 	},
 }
 
-var optionCloseCmd = &cobra.Command{
-	Use:   "close",
-	Short: "期权平仓",
-	Long:  `a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		if len(args) > 0 {
-			optionCloseCmdQuery.Code = args[0]
-		}
-
-		var trade *models.OptionTrade
-		tradeList := service.OptionTradeSvc.List(&optionCloseCmdQuery)
-		if len(tradeList) == 0 {
-			red.Println("没找到对应的期权! ")
-			os.Exit(1)
-		} else if len(tradeList) > 1 {
-			printOptionTableHead()
-			for _, v := range tradeList {
-				printOptionTableRow(&v)
-			}
-			blue.Println("找到多个期权，请筛选ID: ")
-			id := 0
-			fmt.Scanln(&id)
-
-			t, err := service.OptionTradeSvc.GetById(uint(id))
-			if err != nil {
-				red.Printf("系统错误! \n")
-				os.Exit(1)
-			}
-			trade = t
-
-		} else {
-			trade = &tradeList[0]
-			printOptionTableHead()
-			printOptionTableRow(trade)
-		}
-
-		// 选择操作
-		blue.Println("请选择操作序号: ")
-		km := make([]enum.KeyMap, 0)
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.OPTION_OPS_CLOSE.Desc()), Val: int(enum.OPTION_OPS_CLOSE)})
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.OPTION_OPS_INVALID.Desc()), Val: int(enum.OPTION_OPS_INVALID)})
-		km = append(km, enum.KeyMap{Key: fmt.Sprintf("%v", enum.OPTION_OPS_EXERCISE.Desc()), Val: int(enum.OPTION_OPS_EXERCISE)})
-		for _, v := range km {
-			blue.Printf("  %d: %s\n", v.Val, v.Key)
-		}
-		var ops int
-		fmt.Scanln(&ops)
-		operate := enum.OptionCloseEnum(ops)
-		if operate != enum.OPTION_OPS_CLOSE && operate != enum.OPTION_OPS_INVALID && operate != enum.OPTION_OPS_EXERCISE {
-			red.Printf("输入操作错误! \n")
-			os.Exit(1)
-		}
-
-		// 平仓
-		if operate == enum.OPTION_OPS_CLOSE {
-			// 操作价格
-			blue.Println("请输入价格: ")
-			var price string
-			fmt.Scanln(&price)
-
-			trade.Close(price)
-			service.OptionTradeSvc.Update(trade)
-			blue.Printf("操作成功! \n")
-		} else if operate == enum.OPTION_OPS_INVALID {
-			trade.Invalid()
-			service.OptionTradeSvc.Update(trade)
-			blue.Printf("操作成功! \n")
-		} else if operate == enum.OPTION_OPS_EXERCISE {
-			trade.Exercise()
-			service.OptionTradeSvc.Update(trade)
-			blue.Printf("操作成功! \n")
-		}
-
-	},
-}
-
-var optionDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "删除",
-	Long:  `a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		if len(args) > 0 {
-			optionDeleteCmdQuery.Code = args[0]
-		}
-
-		var trade *models.OptionTrade
-		tradeList := service.OptionTradeSvc.List(&optionDeleteCmdQuery)
-		if len(tradeList) == 0 {
-			red.Println("没找到对应的期权! ")
-			os.Exit(1)
-		} else if len(tradeList) > 1 {
-			printOptionTableHead()
-			for _, v := range tradeList {
-				printOptionTableRow(&v)
-			}
-			blue.Println("找到多个期权，请筛选ID: ")
-			id := 0
-			fmt.Scanln(&id)
-
-			t, err := service.OptionTradeSvc.GetById(uint(id))
-			if err != nil {
-				red.Printf("系统错误! \n")
-				os.Exit(1)
-			}
-			trade = t
-
-		} else {
-			trade = &tradeList[0]
-			printOptionTableHead()
-			printOptionTableRow(trade)
-		}
-
-		blue.Println("确认删除: (y/n)")
-		var confrim string
-		fmt.Scanln(&confrim)
-		if confrim == "y" {
-			err := service.OptionTradeSvc.Delete(trade.Id)
-			if err != nil {
-				red.Printf("删除失败: %s\n", err.Error())
-				os.Exit(1)
-			}
-			blue.Println("删除成功! ")
-		}
-	},
-}
-
 var (
 	optionListCmdQuery   query.OptionTradeQuery
 	optionCloseCmdQuery  query.OptionTradeQuery
@@ -266,15 +80,7 @@ func init() {
 	optionListCmd.Flags().IntVar(&optionListCmdQuery.PageSize, "pageSize", 20, "分页查询，查询数据量")
 	optionListCmd.Flags().IntVar(&optionListCmdQuery.PageNo, "pageNo", 1, "分页查询，页数")
 
-	optionCloseCmd.Flags().StringVar(&optionCloseCmdQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
-	optionCloseCmd.Flags().StringVar(&optionCloseCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
-	optionCloseCmd.Flags().IntSliceVarP(&optionCloseCmdQuery.StatusList, "status", "s", []int{1}, "选择状态，1: 持仓，2: 平仓，-1: 失效")
-
-	optionDeleteCmd.Flags().IntSliceVarP(&optionDeleteCmdQuery.StatusList, "status", "s", []int{}, "选择状态，1: 持仓，2: 平仓，-1: 失效")
-	optionDeleteCmd.Flags().StringVar(&optionDeleteCmdQuery.StartExerciseDate, "from", "", "查询行权日范围，开始时间")
-	optionDeleteCmd.Flags().StringVar(&optionDeleteCmdQuery.EndExerciseDate, "to", "", "查询行权日范围，结束时间")
-
-	optionCmd.AddCommand(optionCreateCmd, optionListCmd, optionCloseCmd, optionDeleteCmd)
+	optionCmd.AddCommand(optionListCmd)
 
 	// Here you will define your flags and configuration settings.
 
