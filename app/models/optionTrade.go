@@ -16,14 +16,14 @@ type OptionTrade struct {
 	Timestamps
 	Option
 	Sid        uint   // optionstrategy关联id
-	Position   string `gorm:"type:varchar(32)"` // short or long
+	Position   string `gorm:"type:varchar(32)"` // seller or buyer
 	BuyPrice   string `gorm:"type:varchar(32)"` // 买价格
 	SellPrice  string `gorm:"type:varchar(32)"` // 卖价格
 	Profit     string `gorm:"type:varchar(32)"` // 收益
 	ProfitRate string `gorm:"type:varchar(32)"` // 收益率
 	Count      int64  `gorm:"not null"`         // 数量
 	Premium    string `gorm:"not null"`         // 期权权利金
-	Status     int64  `gorm:"not null"`         // 状态
+	Status     string `gorm:"not null"`         // 状态
 }
 
 // 自定义表名
@@ -31,7 +31,7 @@ func (OptionTrade) TableName() string {
 	return "option_trade"
 }
 
-func NewOptionTrade(code string, optCreateEnum enum.OptionCreateEnum, price string) (*OptionTrade, error) {
+func NewOptionTrade(code string, optPositionEnum enum.OptionPositionEnum, price string) (*OptionTrade, error) {
 	trade := new(OptionTrade)
 	trade.CreateTime = time.Now()
 	trade.UpdateTime = time.Now()
@@ -45,25 +45,24 @@ func NewOptionTrade(code string, optCreateEnum enum.OptionCreateEnum, price stri
 
 	pricef, err := strconv.ParseFloat(price, 64)
 	if err != nil {
-		return nil, errors.New("价格格式错误！")
+		return nil, errors.New("价格格式错误! ")
 	}
 
-	trade.Status = int64(enum.OPTION_STATUS_HAVING)
+	trade.Status = enum.OPTION_STATUS_HAVING.Name()
+	trade.Position = optPositionEnum.Name()
 	// 新建option只有买和卖
-	if enum.LONG == optCreateEnum {
-		trade.Position = "long"
+	if enum.Option_Position_Buyer == optPositionEnum {
 		trade.Count = 1
 		// 买，损失权利金，负数
 		trade.Premium = fmt.Sprintf("%.2f", -pricef*float64(trade.ContractSize))
 		trade.BuyPrice = fmt.Sprintf("%.2f", pricef)
-	} else if enum.SHORT == optCreateEnum {
-		trade.Position = "short"
+	} else if enum.Option_Position_Seller == optPositionEnum {
 		trade.Count = -1
 		// 卖，获得权利金，正数
 		trade.Premium = fmt.Sprintf("%.2f", pricef*float64(trade.ContractSize))
 		trade.SellPrice = fmt.Sprintf("%.2f", pricef)
 	} else {
-		return nil, errors.New("期权操作类型错误！")
+		return nil, errors.New("期权操作类型错误! ")
 	}
 
 	return trade, nil
@@ -72,23 +71,23 @@ func NewOptionTrade(code string, optCreateEnum enum.OptionCreateEnum, price stri
 // 平仓
 func (trade *OptionTrade) Close(price string) error {
 
-	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
-		return errors.New("该期权已经平仓或者失效！")
+	if trade.Status == enum.OPTION_STATUS_CLOSE.Name() || trade.Status == enum.OPTION_STATUS_INVALID.Name() {
+		return errors.New("该期权已经平仓或者失效! ")
 	}
 
 	// 平仓
-	trade.Status = int64(enum.OPTION_STATUS_CLOSE)
+	trade.Status = enum.OPTION_STATUS_CLOSE.Name()
 
 	pricef, err := strconv.ParseFloat(price, 64)
 	if err != nil {
-		return errors.New("价格格式错误！")
+		return errors.New("价格格式错误! ")
 	}
 
-	if trade.Position == "short" {
+	if trade.Position == enum.Option_Position_Seller.Name() {
 		trade.BuyPrice = fmt.Sprintf("%.2f", pricef)
 		trade.Profit = fmt.Sprintf("%.2f", (cast.ToFloat64(trade.SellPrice)-pricef)*float64(trade.ContractSize))
 		trade.ProfitRate = fmt.Sprintf("%.2f", (cast.ToFloat64(trade.SellPrice)-pricef)/cast.ToFloat64(trade.SellPrice))
-	} else if trade.Position == "long" {
+	} else if trade.Position == enum.Option_Position_Buyer.Name() {
 		trade.SellPrice = fmt.Sprintf("%.2f", pricef)
 		trade.Profit = fmt.Sprintf("%.2f", (pricef-cast.ToFloat64(trade.BuyPrice))*float64(trade.ContractSize))
 		trade.ProfitRate = fmt.Sprintf("%.2f", (pricef-cast.ToFloat64(trade.BuyPrice))/cast.ToFloat64(trade.BuyPrice))
@@ -100,18 +99,18 @@ func (trade *OptionTrade) Close(price string) error {
 
 // 失效
 func (trade *OptionTrade) Invalid() error {
-	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
-		return errors.New("该期权已经平仓或者失效！")
+	if trade.Status == enum.OPTION_STATUS_CLOSE.Name() || trade.Status == enum.OPTION_STATUS_INVALID.Name() {
+		return errors.New("该期权已经平仓或者失效! ")
 	}
 
 	// 失效
-	trade.Status = int64(enum.OPTION_STATUS_INVALID)
+	trade.Status = enum.OPTION_STATUS_INVALID.Name()
 
 	trade.Profit = trade.Premium
-	if trade.Position == "short" {
+	if trade.Position == enum.Option_Position_Seller.Name() {
 		trade.ProfitRate = "1.00"
 		trade.BuyPrice = "0.00"
-	} else if trade.Position == "long" {
+	} else if trade.Position == enum.Option_Position_Buyer.Name() {
 		trade.ProfitRate = "-1.00"
 		trade.SellPrice = "0.00"
 	}
@@ -121,18 +120,18 @@ func (trade *OptionTrade) Invalid() error {
 
 // 行权
 func (trade *OptionTrade) Exercise() error {
-	if int(trade.Status) == int(enum.OPTION_STATUS_CLOSE) || int(trade.Status) == int(enum.OPTION_STATUS_INVALID) {
-		return errors.New("该期权已经平仓或者失效！")
+	if trade.Status == enum.OPTION_STATUS_CLOSE.Name() || trade.Status == enum.OPTION_STATUS_INVALID.Name() {
+		return errors.New("该期权已经平仓或者失效! ")
 	}
 
 	// 失效
-	trade.Status = int64(enum.OPTION_STATUS_EXERCISE)
+	trade.Status = enum.OPTION_STATUS_EXERCISE.Name()
 
 	trade.Profit = trade.Premium
-	if trade.Position == "short" {
+	if trade.Position == enum.Option_Position_Seller.Name() {
 		trade.ProfitRate = "1.00"
 		trade.BuyPrice = "0.00"
-	} else if trade.Position == "long" {
+	} else if trade.Position == enum.Option_Position_Buyer.Name() {
 		trade.ProfitRate = "-1.00"
 		trade.SellPrice = "0.00"
 	}
@@ -147,7 +146,7 @@ func (trade *OptionTrade) Roll(closePrice, exerciseDate, sellPrice string) (*Opt
 		return nil, errors.New("sell put才能roll")
 	}
 
-	if trade.Status != int64(enum.OPTION_STATUS_HAVING) && trade.Status != int64(enum.OPTION_STATUS_CLOSE) {
+	if trade.Status != enum.OPTION_STATUS_HAVING.Name() && trade.Status != enum.OPTION_STATUS_CLOSE.Name() {
 		return nil, errors.New("当前put状态无法roll")
 	}
 
@@ -158,7 +157,7 @@ func (trade *OptionTrade) Roll(closePrice, exerciseDate, sellPrice string) (*Opt
 	code := strings.ReplaceAll(trade.Code, trade.ExerciseDate, exerciseDate)
 
 	// 生产option交易对象
-	rollOptionTrade, err := NewOptionTrade(code, enum.SHORT, sellPrice)
+	rollOptionTrade, err := NewOptionTrade(code, enum.Option_Position_Seller, sellPrice)
 	if err != nil {
 		return nil, err
 	}

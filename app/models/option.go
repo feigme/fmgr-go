@@ -21,14 +21,14 @@ var (
 
 func CheckOptionCode(code string) (string, error) {
 	if code == "" {
-		return "", errors.New("期权code不能为空！")
+		return "", errors.New("期权code不能为空! ")
 	}
 
 	// code转成大写
 	code = strings.ToUpper(code)
 	err := reg.MatchString(code)
 	if !err {
-		return "", errors.New("期权code格式错误！")
+		return "", errors.New("期权code格式错误! ")
 	}
 	return code, nil
 }

@@ -18,9 +18,15 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/feigme/fmgr-go/app/models"
 	"github.com/feigme/fmgr-go/bootstrap"
 	"github.com/spf13/cobra"
+)
+
+var (
+	red  = color.New(color.FgRed)
+	blue = color.New(color.FgHiBlue)
 )
 
 // initCmd represents the init command

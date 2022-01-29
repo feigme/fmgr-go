@@ -5,12 +5,12 @@ import (
 	"fmt"
 )
 
-type OptionCloseEnum int
+type OptionCloseEnum string
 
 const (
-	OPTION_OPS_CLOSE    OptionCloseEnum = 3  // 平仓
-	OPTION_OPS_INVALID  OptionCloseEnum = -1 // 失效
-	OPTION_OPS_EXERCISE OptionCloseEnum = 4  // 行权
+	OPTION_OPS_CLOSE    OptionCloseEnum = "close"    // 平仓
+	OPTION_OPS_INVALID  OptionCloseEnum = "invalid"  // 失效
+	OPTION_OPS_EXERCISE OptionCloseEnum = "exercise" // 行权
 )
 
 var optionCloseEnumMap = map[OptionCloseEnum]string{
@@ -20,28 +20,32 @@ var optionCloseEnumMap = map[OptionCloseEnum]string{
 }
 
 func (o OptionCloseEnum) Desc() string {
-	str, ok := optionCloseEnumMap[o]
+	p, ok := optionCloseEnumMap[o]
 	if ok {
-		return str
+		return p
 	}
 	return ""
 }
 
+func (o OptionCloseEnum) Name() string {
+	return string(o)
+}
+
 // List 列表输出
-func OptionCloseEnumList() []KeyMap {
-	km := make([]KeyMap, 0)
+func OptionCloseEnumList() []EnumItem {
+	km := make([]EnumItem, 0)
 	for k, v := range optionCloseEnumMap {
-		km = append(km, KeyMap{Key: fmt.Sprintf("%v", v), Val: int(k)})
+		km = append(km, EnumItem{Name: k.Name(), Desc: v})
 	}
 	return km
 }
 
 // 是否存在
-func GetOptionCloseEnumByKey(key int) (OptionCloseEnum, error) {
+func GetOptionCloseEnumByName(name string) (OptionCloseEnum, error) {
 	for k := range optionCloseEnumMap {
-		if k == OptionCloseEnum(key) {
+		if name == k.Name() {
 			return k, nil
 		}
 	}
-	return 0, errors.New("操作定义不存在！")
+	return "", errors.New(fmt.Sprintf("枚举不存在! name: %s", name))
 }

@@ -52,7 +52,7 @@ func (svc *OptionTradeService) RollPut(id int, closePrice, exerciseDate, sellPri
 
 		code := strings.ReplaceAll(trade.Code, trade.ExerciseDate, exerciseDate)
 
-		rollOptionTrade, err := models.NewOptionTrade(code, enum.SHORT, sellPrice)
+		rollOptionTrade, err := models.NewOptionTrade(code, enum.Option_Position_Seller, sellPrice)
 		if err != nil {
 			return err
 		}

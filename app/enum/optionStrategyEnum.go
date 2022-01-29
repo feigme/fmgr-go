@@ -2,75 +2,53 @@ package enum
 
 import (
 	"errors"
-	"sort"
+	"fmt"
 )
 
 //期权策略
-type OptionStrategyEnum int
-
-type OptionStrategyInfo struct {
-	Key  int
-	Code string
-	Desc string
-}
+type OptionStrategyEnum string
 
 const (
-	OST_COVERED_CALL OptionStrategyEnum = 1
-	OST_ROLLING_PUT  OptionStrategyEnum = 2
+	OST_Covered_Call     OptionStrategyEnum = "covered call"
+	OST_Collar           OptionStrategyEnum = "collar"
+	OST_Naked_Short_Put  OptionStrategyEnum = "naked short put"
+	OST_Naked_Short_Call OptionStrategyEnum = "naked short call"
 )
 
-var optionStrategyMap = map[OptionStrategyEnum]OptionStrategyInfo{
-	OST_COVERED_CALL: {
-		Key:  1,
-		Code: "covered call",
-		Desc: "持有一手正股，同时卖出1张call",
-	},
-	OST_ROLLING_PUT: {
-		Key:  2,
-		Code: "rolling put",
-		Desc: "平仓当前put，并卖出1张行权价相同、行权日比较靠后的put",
-	},
+var optionStrategyMap = map[OptionStrategyEnum]string{
+	OST_Covered_Call:     "持有一手正股，同时卖出1张价外call",
+	OST_Collar:           "持有一手正股，同时卖出1张价外call，买入1张价外put",
+	OST_Naked_Short_Put:  "裸卖1张价外put",
+	OST_Naked_Short_Call: "裸卖1张价外call",
 }
 
-func (o OptionStrategyEnum) getCode() string {
-	info, ok := optionStrategyMap[o]
+func (o OptionStrategyEnum) Desc() string {
+	p, ok := optionStrategyMap[o]
 	if ok {
-		return info.Code
+		return p
 	}
 	return ""
 }
 
-func (o OptionStrategyEnum) getDesc() string {
-	info, ok := optionStrategyMap[o]
-	if ok {
-		return info.Desc
-	}
-	return ""
+func (o OptionStrategyEnum) Name() string {
+	return string(o)
 }
 
 // List 列表输出
-func OptionStEnumList() []OptionStrategyInfo {
-	// 所有key
-	var keys []int
-	for k := range optionStrategyMap {
-		keys = append(keys, int(k))
-	}
-
-	sort.Ints(keys)
-
-	km := make([]OptionStrategyInfo, 0)
-	for _, k := range keys {
-		km = append(km, optionStrategyMap[OptionStrategyEnum(k)])
+func OptionStrategyEnumList() []EnumItem {
+	km := make([]EnumItem, 0)
+	for k, v := range optionStrategyMap {
+		km = append(km, EnumItem{Name: k.Name(), Desc: v})
 	}
 	return km
 }
 
 // 是否存在
-func GetOptionStEnumByKey(key int) (OptionStrategyEnum, error) {
+func GetOptionStEnumByName(name string) (OptionStrategyEnum, error) {
 	for k := range optionStrategyMap {
-		if k == OptionStrategyEnum(key) {
+		if k.Name() == name {
 			return k, nil
 		}
 	}
-	return 0, errors.New("操作定义不存在！")
+	return "", errors.New(fmt.Sprintf("枚举不存在! name: %s", name))
 }

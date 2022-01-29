@@ -29,11 +29,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	red  = color.New(color.FgRed)
-	blue = color.New(color.FgHiBlue)
-)
-
 // optionCmd represents the option command
 var optionCmd = &cobra.Command{
 	Use:   "option",
