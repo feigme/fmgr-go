@@ -15,7 +15,7 @@ func TestSaveStrategy(t *testing.T) {
 	convey.Convey("测试保存策略", t, func() {
 		// mock
 		test.Mock.ExpectBegin()
-		test.Mock.ExpectExec("INSERT INTO `option_strategy`").WithArgs(test.AnyTime{}, test.AnyTime{}, "xxx", "default", "covered call").WillReturnResult(sqlmock.NewResult(1, 1))
+		test.Mock.ExpectExec("INSERT INTO `option_strategy`").WithArgs(test.AnyTime{}, test.AnyTime{}, "xxx", "default", "", "covered call").WillReturnResult(sqlmock.NewResult(1, 1))
 		test.Mock.ExpectCommit()
 
 		st := &models.OptionStrategy{
