@@ -69,7 +69,7 @@ func initMySqlGorm() *gorm.DB {
 // 数据库表初始化
 func InitMySqlTables(dst ...interface{}) {
 
-	err := DB.AutoMigrate(dst...)
+	err := DB.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(dst...)
 	if err != nil {
 		zaplog.Log.Error("migrate table failed", zap.Any("err", err))
 		os.Exit(0)

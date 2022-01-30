@@ -22,6 +22,7 @@ type metaData struct {
 }
 
 type spec struct {
+	Market         string    `yaml:"market"`
 	OptionStrategy string    `yaml:"optionStrategy"`
 	Stock          stock     `yaml:"stock"`
 	Options        []options `yaml:"options"`

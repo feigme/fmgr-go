@@ -30,7 +30,7 @@ func (repo *OptionTradeRepository) GetById(id uint) (trade *models.OptionTrade, 
 	return trade, err
 }
 
-func (repo *OptionTradeRepository) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
+func (repo *OptionTradeRepository) List(query *query.OptionQuery) (list []models.OptionTrade) {
 	tx := repo.db
 	if query.Code != "" {
 		code := strings.ToUpper(query.Code)

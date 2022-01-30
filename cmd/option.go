@@ -66,9 +66,7 @@ var optionListCmd = &cobra.Command{
 }
 
 var (
-	optionListCmdQuery   query.OptionTradeQuery
-	optionCloseCmdQuery  query.OptionTradeQuery
-	optionDeleteCmdQuery query.OptionTradeQuery
+	optionListCmdQuery query.OptionQuery
 )
 
 func init() {

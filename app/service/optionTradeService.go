@@ -20,7 +20,7 @@ func (svc *OptionTradeService) Save(trade *models.OptionTrade) error {
 	return repository.NewOptionTradeRepo(context.Background()).Save(trade)
 }
 
-func (svc *OptionTradeService) List(query *query.OptionTradeQuery) (list []models.OptionTrade) {
+func (svc *OptionTradeService) List(query *query.OptionQuery) (list []models.OptionTrade) {
 	return repository.NewOptionTradeRepo(context.Background()).List(query)
 }
 
@@ -52,7 +52,7 @@ func (svc *OptionTradeService) RollPut(id int, closePrice, exerciseDate, sellPri
 
 		code := strings.ReplaceAll(trade.Code, trade.ExerciseDate, exerciseDate)
 
-		rollOptionTrade, err := models.NewOptionTrade(code, enum.Option_Position_Seller, sellPrice)
+		rollOptionTrade, err := models.NewOptionTrade(trade.Market, code, enum.Option_Position_Seller, sellPrice)
 		if err != nil {
 			return err
 		}

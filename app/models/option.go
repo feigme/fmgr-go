@@ -16,7 +16,7 @@ type Option struct {
 }
 
 var (
-	reg = regexp.MustCompile(`^([A-Za-z]{1,4})(\d{6})([pPcC]{1})(\d{5,6})$`)
+	reg = regexp.MustCompile(`^([A-Za-z]{1,4})(\d{6})([pPcC]{1})(\d{4,7})$`)
 )
 
 func CheckOptionCode(code string) (string, error) {

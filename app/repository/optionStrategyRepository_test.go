@@ -15,10 +15,15 @@ func TestSaveStrategy(t *testing.T) {
 	convey.Convey("测试保存策略", t, func() {
 		// mock
 		test.Mock.ExpectBegin()
-		test.Mock.ExpectExec("INSERT INTO `option_strategy`").WithArgs(test.AnyTime{}, test.AnyTime{}, "covered call").WillReturnResult(sqlmock.NewResult(1, 1))
+		test.Mock.ExpectExec("INSERT INTO `option_strategy`").WithArgs(test.AnyTime{}, test.AnyTime{}, "xxx", "default", "covered call").WillReturnResult(sqlmock.NewResult(1, 1))
 		test.Mock.ExpectCommit()
 
-		err := NewOptionStrategyRepo(context.Background()).Save(&models.OptionStrategy{Code: enum.OST_Covered_Call.Name()})
+		st := &models.OptionStrategy{
+			Name:      "xxx",
+			Namespace: "default",
+			Code:      enum.OST_Covered_Call.Name(),
+		}
+		err := NewOptionStrategyRepo(context.Background()).Save(st)
 		convey.So(err, convey.ShouldBeNil)
 	})
 }

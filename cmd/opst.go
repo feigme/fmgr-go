@@ -16,10 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/feigme/fmgr-go/app/models"
 	"github.com/feigme/fmgr-go/app/opst"
+	"github.com/feigme/fmgr-go/app/query"
+	"github.com/feigme/fmgr-go/app/service"
 	"github.com/spf13/cobra"
 )
 
@@ -44,12 +46,42 @@ var opstApplyCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Print(opst)
+		err = service.OpstSvc.Apply(opst)
+		if err != nil {
+			red.Printf("操作失败: %s\n", err.Error())
+			os.Exit(1)
+		}
+
+		blue.Println("操作成功! ")
 	},
+}
+
+var opstListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "期权策略列表",
+	Long:  `a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		list := service.OpstSvc.List(&opstQuery)
+
+		printOpstTableHead()
+		printOpstTableRow(list)
+
+	},
+}
+
+func printOpstTableHead() {
+	blue.Printf("%-6v %-20v \n", "ID", "名称")
+}
+
+func printOpstTableRow(list []models.OptionStrategy) {
+	for _, trade := range list {
+		blue.Printf("%-6v %-22v \n", trade.Id, trade.Name)
+	}
 }
 
 var (
 	opstApplyFile string
+	opstQuery     query.OpstQuery
 )
 
 func init() {
@@ -57,7 +89,7 @@ func init() {
 
 	opstApplyCmd.Flags().StringVarP(&opstApplyFile, "file", "f", "", "yaml文件路径")
 
-	opstCmd.AddCommand(opstApplyCmd)
+	opstCmd.AddCommand(opstApplyCmd, opstListCmd)
 
 	// Here you will define your flags and configuration settings.
 

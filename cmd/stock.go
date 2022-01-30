@@ -17,7 +17,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/feigme/fmgr-go/app/models"
+	"github.com/feigme/fmgr-go/app/service"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +34,53 @@ var stockCmd = &cobra.Command{
 	},
 }
 
+var stockCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "记录购买股票",
+	Long:  `a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		blue.Println("选择股票市场: (HK/US)")
+		var market string
+		fmt.Scanln(&market)
+
+		blue.Println("股票代码: (港股用中文)")
+		var code string
+		fmt.Scanln(&code)
+
+		optionCode := service.StockTradeSvc.GetOptionCode(code)
+		if optionCode == "" {
+			blue.Println("输入股票对应的期权code: ")
+			fmt.Scanln(&optionCode)
+		}
+
+		blue.Println("股票购买价格: ")
+		var price string
+		fmt.Scanln(&price)
+
+		blue.Println("股票数量: ")
+		var count int
+		fmt.Scanln(&count)
+
+		stock, err := models.NewStockTrade(market, code, optionCode, price, count)
+		if err != nil {
+			red.Println(err.Error())
+			os.Exit(1)
+		}
+
+		err = service.StockTradeSvc.Save(stock)
+		if err != nil {
+			red.Println(err.Error())
+			os.Exit(1)
+		}
+
+		blue.Println("操作成功! ")
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(stockCmd)
+
+	stockCmd.AddCommand(stockCreateCmd)
 
 	// Here you will define your flags and configuration settings.
 

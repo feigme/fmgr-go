@@ -11,7 +11,7 @@ import (
 func TestNewOptionTrade(t *testing.T) {
 	Convey("单腿策略", t, func() {
 		Convey("卖call", func() {
-			trade, err := NewOptionTrade("TCH211230C500000", enum.Option_Position_Seller, "8.0")
+			trade, err := NewOptionTrade("HK", "TCH211230C500000", enum.Option_Position_Seller, "8.0")
 			So(err, ShouldBeNil)
 
 			// 交易信息
@@ -29,7 +29,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 		Convey("卖call后，操作", func() {
 			Convey("失效", func() {
-				trade, err := NewOptionTrade("TCH211230C500000", enum.Option_Position_Seller, "8.0")
+				trade, err := NewOptionTrade("HK", "TCH211230C500000", enum.Option_Position_Seller, "8.0")
 				So(err, ShouldBeNil)
 
 				trade.Invalid()
@@ -48,7 +48,7 @@ func TestNewOptionTrade(t *testing.T) {
 			})
 
 			Convey("行权", func() {
-				trade, err := NewOptionTrade("TCH211230C500000", enum.Option_Position_Seller, "8.0")
+				trade, err := NewOptionTrade("HK", "TCH211230C500000", enum.Option_Position_Seller, "8.0")
 				So(err, ShouldBeNil)
 
 				trade.Exercise()
@@ -68,7 +68,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 			Convey("平仓", func() {
 				Convey("盈利", func() {
-					trade, err := NewOptionTrade("TCH211230C500000", enum.Option_Position_Seller, "8.0")
+					trade, err := NewOptionTrade("HK", "TCH211230C500000", enum.Option_Position_Seller, "8.0")
 					So(err, ShouldBeNil)
 
 					trade.Close("1.12")
@@ -87,7 +87,7 @@ func TestNewOptionTrade(t *testing.T) {
 				})
 
 				Convey("亏损", func() {
-					trade, err := NewOptionTrade("TCH211230C500000", enum.Option_Position_Seller, "8.0")
+					trade, err := NewOptionTrade("HK", "TCH211230C500000", enum.Option_Position_Seller, "8.0")
 					So(err, ShouldBeNil)
 
 					trade.Close("11.2")
@@ -108,7 +108,7 @@ func TestNewOptionTrade(t *testing.T) {
 		})
 
 		Convey("卖put", func() {
-			trade, err := NewOptionTrade("TCH211230P450000", enum.Option_Position_Seller, "12.1")
+			trade, err := NewOptionTrade("HK", "TCH211230P450000", enum.Option_Position_Seller, "12.1")
 			So(err, ShouldBeNil)
 
 			// 交易信息
@@ -126,7 +126,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 		Convey("卖put后，操作", func() {
 			Convey("失效", func() {
-				trade, err := NewOptionTrade("TCH211230P450000", enum.Option_Position_Seller, "12.1")
+				trade, err := NewOptionTrade("HK", "TCH211230P450000", enum.Option_Position_Seller, "12.1")
 				So(err, ShouldBeNil)
 
 				trade.Invalid()
@@ -145,7 +145,7 @@ func TestNewOptionTrade(t *testing.T) {
 			})
 
 			Convey("行权", func() {
-				trade, err := NewOptionTrade("TCH211230P450000", enum.Option_Position_Seller, "12.1")
+				trade, err := NewOptionTrade("HK", "TCH211230P450000", enum.Option_Position_Seller, "12.1")
 				So(err, ShouldBeNil)
 
 				trade.Exercise()
@@ -165,7 +165,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 			Convey("平仓", func() {
 				Convey("盈利", func() {
-					trade, err := NewOptionTrade("TCH211230P450000", enum.Option_Position_Seller, "12.1")
+					trade, err := NewOptionTrade("HK", "TCH211230P450000", enum.Option_Position_Seller, "12.1")
 					So(err, ShouldBeNil)
 
 					trade.Close("0.3")
@@ -183,7 +183,7 @@ func TestNewOptionTrade(t *testing.T) {
 					So(trade.ProfitRate, ShouldEqual, "0.98")
 				})
 				Convey("亏损", func() {
-					trade, err := NewOptionTrade("TCH211230P450000", enum.Option_Position_Seller, "12.1")
+					trade, err := NewOptionTrade("HK", "TCH211230P450000", enum.Option_Position_Seller, "12.1")
 					So(err, ShouldBeNil)
 
 					trade.Close("16.1")
@@ -204,7 +204,7 @@ func TestNewOptionTrade(t *testing.T) {
 		})
 
 		Convey("买call", func() {
-			trade, err := NewOptionTrade("bili211217C70000", enum.Option_Position_Buyer, "0.34")
+			trade, err := NewOptionTrade("US", "bili211217C70000", enum.Option_Position_Buyer, "0.34")
 			So(err, ShouldBeNil)
 
 			// 交易信息
@@ -222,7 +222,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 		Convey("买call，操作", func() {
 			Convey("失效", func() {
-				trade, err := NewOptionTrade("bili211217C70000", enum.Option_Position_Buyer, "0.34")
+				trade, err := NewOptionTrade("US", "bili211217C70000", enum.Option_Position_Buyer, "0.34")
 				So(err, ShouldBeNil)
 
 				trade.Invalid()
@@ -249,7 +249,7 @@ func TestNewOptionTrade(t *testing.T) {
 			})
 
 			Convey("行权", func() {
-				trade, err := NewOptionTrade("bili211217C70000", enum.Option_Position_Buyer, "0.34")
+				trade, err := NewOptionTrade("US", "bili211217C70000", enum.Option_Position_Buyer, "0.34")
 				So(err, ShouldBeNil)
 
 				trade.Exercise()
@@ -277,7 +277,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 			Convey("平仓", func() {
 				Convey("盈利", func() {
-					trade, err := NewOptionTrade("bili211217C70000", enum.Option_Position_Buyer, "0.34")
+					trade, err := NewOptionTrade("US", "bili211217C70000", enum.Option_Position_Buyer, "0.34")
 					So(err, ShouldBeNil)
 
 					trade.Close("5.1")
@@ -304,7 +304,7 @@ func TestNewOptionTrade(t *testing.T) {
 				})
 
 				Convey("亏损", func() {
-					trade, err := NewOptionTrade("bili211217C70000", enum.Option_Position_Buyer, "0.34")
+					trade, err := NewOptionTrade("US", "bili211217C70000", enum.Option_Position_Buyer, "0.34")
 					So(err, ShouldBeNil)
 
 					trade.Close("0.1")
@@ -333,7 +333,7 @@ func TestNewOptionTrade(t *testing.T) {
 		})
 
 		Convey("买put", func() {
-			trade, err := NewOptionTrade("futu211210P47000", enum.Option_Position_Buyer, "1.6")
+			trade, err := NewOptionTrade("US", "futu211210P47000", enum.Option_Position_Buyer, "1.6")
 			So(err, ShouldBeNil)
 
 			// 交易信息
@@ -351,7 +351,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 		Convey("买put后，操作", func() {
 			Convey("失效", func() {
-				trade, err := NewOptionTrade("futu211210P47000", enum.Option_Position_Buyer, "1.6")
+				trade, err := NewOptionTrade("US", "futu211210P47000", enum.Option_Position_Buyer, "1.6")
 				So(err, ShouldBeNil)
 
 				trade.Invalid()
@@ -370,7 +370,7 @@ func TestNewOptionTrade(t *testing.T) {
 			})
 
 			Convey("行权", func() {
-				trade, err := NewOptionTrade("futu211210P47000", enum.Option_Position_Buyer, "1.6")
+				trade, err := NewOptionTrade("US", "futu211210P47000", enum.Option_Position_Buyer, "1.6")
 				So(err, ShouldBeNil)
 
 				trade.Exercise()
@@ -390,7 +390,7 @@ func TestNewOptionTrade(t *testing.T) {
 
 			Convey("平仓", func() {
 				Convey("盈利", func() {
-					trade, err := NewOptionTrade("futu211210P47000", enum.Option_Position_Buyer, "1.6")
+					trade, err := NewOptionTrade("US", "futu211210P47000", enum.Option_Position_Buyer, "1.6")
 					So(err, ShouldBeNil)
 
 					trade.Close("3")
@@ -409,7 +409,7 @@ func TestNewOptionTrade(t *testing.T) {
 				})
 
 				Convey("亏损", func() {
-					trade, err := NewOptionTrade("futu211210P47000", enum.Option_Position_Buyer, "1.6")
+					trade, err := NewOptionTrade("US", "futu211210P47000", enum.Option_Position_Buyer, "1.6")
 					So(err, ShouldBeNil)
 
 					trade.Close("0.6")

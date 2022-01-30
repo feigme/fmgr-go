@@ -24,6 +24,7 @@ type OptionTrade struct {
 	Count      int64  `gorm:"not null"`         // 数量
 	Premium    string `gorm:"not null"`         // 期权权利金
 	Status     string `gorm:"not null"`         // 状态
+	Market     string `gorm:"type:varchar(8)"`  // 股票市场 HK/US
 }
 
 // 自定义表名
@@ -31,7 +32,7 @@ func (OptionTrade) TableName() string {
 	return "option_trade"
 }
 
-func NewOptionTrade(code string, optPositionEnum enum.OptionPositionEnum, price string) (*OptionTrade, error) {
+func NewOptionTrade(market, code string, optPositionEnum enum.OptionPositionEnum, price string) (*OptionTrade, error) {
 	trade := new(OptionTrade)
 	trade.CreateTime = time.Now()
 	trade.UpdateTime = time.Now()
@@ -40,8 +41,16 @@ func NewOptionTrade(code string, optPositionEnum enum.OptionPositionEnum, price 
 	if err != nil {
 		return nil, err
 	}
-
 	trade.Option = *option
+
+	market = strings.ToUpper(market)
+	if market != "HK" && market != "US" {
+		return nil, errors.New("只不支持US、HK! ")
+	}
+	trade.Market = market
+	if trade.Market == "US" {
+		trade.ContractSize = 100 // 美股固定是100
+	}
 
 	pricef, err := strconv.ParseFloat(price, 64)
 	if err != nil {
@@ -157,7 +166,7 @@ func (trade *OptionTrade) Roll(closePrice, exerciseDate, sellPrice string) (*Opt
 	code := strings.ReplaceAll(trade.Code, trade.ExerciseDate, exerciseDate)
 
 	// 生产option交易对象
-	rollOptionTrade, err := NewOptionTrade(code, enum.Option_Position_Seller, sellPrice)
+	rollOptionTrade, err := NewOptionTrade(trade.Market, code, enum.Option_Position_Seller, sellPrice)
 	if err != nil {
 		return nil, err
 	}

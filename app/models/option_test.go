@@ -30,6 +30,12 @@ func TestNewOption(t *testing.T) {
 			So(option.ContractSize, ShouldEqual, int64(100))
 		})
 
+		Convey("未识别的期权", func() {
+			_, err := NewOption("TCRRC211230P440000")
+			So(err, ShouldNotBeNil)
+
+		})
+
 		Convey("大小写匹配", func() {
 			option, err := NewOption("nio211126p40000")
 			So(err, ShouldBeNil)
