@@ -17,7 +17,7 @@ func TestSaveOption(t *testing.T) {
 	Convey("测试新建期权记录", t, func() {
 		// mock
 		test.Mock.ExpectBegin()
-		test.Mock.ExpectExec("INSERT INTO `option_trade`").WithArgs(test.AnyTime{}, test.AnyTime{}, "NIO211126P40000", "NIO", "211126", "P", "40000", 100, 0, "seller", "", "1.52", "", "", -1, "152.00", "having", "US").WillReturnResult(sqlmock.NewResult(1, 1))
+		test.Mock.ExpectExec("INSERT INTO `option_trade`").WithArgs(test.AnyTime{}, test.AnyTime{}, "NIO211126P40000", "NIO", "211126", "P", "40000", 100, 0, "seller", "", "1.52", "", "", -1, "152.00", "having", "US", test.AnyTime{}, test.AnyTime{}).WillReturnResult(sqlmock.NewResult(1, 1))
 		test.Mock.ExpectCommit()
 
 		trade, err := models.NewOptionTrade("US", "NIO211126P40000", enum.Option_Position_Seller, "1.52")

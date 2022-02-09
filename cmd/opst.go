@@ -69,6 +69,20 @@ var opstListCmd = &cobra.Command{
 	},
 }
 
+var opstImportCmd = &cobra.Command{
+	Use:   "import",
+	Short: "期权策略列表",
+	Long:  `a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		blue.Printf("import trade history, excel path: %s \n", opstImportFile)
+
+		err := service.OpstSvc.Import(opstImportFile)
+		if err != nil {
+			red.Printf("操作失败: %s\n", err.Error())
+		}
+	},
+}
+
 func printOpstTableHead() {
 	blue.Printf("%-6v %-20v \n", "ID", "名称")
 }
@@ -80,16 +94,21 @@ func printOpstTableRow(list []models.OptionStrategy) {
 }
 
 var (
-	opstApplyFile string
-	opstQuery     query.OpstQuery
+	opstApplyFile  string
+	opstQuery      query.OpstQuery
+	opstImportFile string
 )
 
 func init() {
 	rootCmd.AddCommand(opstCmd)
 
+	// apply
 	opstApplyCmd.Flags().StringVarP(&opstApplyFile, "file", "f", "", "yaml文件路径")
 
-	opstCmd.AddCommand(opstApplyCmd, opstListCmd)
+	// import
+	opstImportCmd.Flags().StringVarP(&opstImportFile, "file", "f", "", "excel文件路径")
+
+	opstCmd.AddCommand(opstApplyCmd, opstListCmd, opstImportCmd)
 
 	// Here you will define your flags and configuration settings.
 

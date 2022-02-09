@@ -41,10 +41,12 @@ type options struct {
 type option struct {
 	Code         string `yaml:"code"`
 	Position     string `yaml:"position"`
-	Price        string `yaml:"price"`
-	ClosePrice   string `yaml:"closePrice"`
 	Count        uint   `yaml:"count"`
 	ContractSize uint   `yaml:"contractSize"`
+	OpenPrice    string `yaml:"openPrice"`
+	OpenTime     string `yaml:"openTime"`
+	ClosePrice   string `yaml:"closePrice"`
+	CloseTime    string `yaml:"closeTime"`
 }
 
 func ParseYaml(path string) (*Opst, error) {

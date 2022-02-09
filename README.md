@@ -31,3 +31,4 @@ main.go项目启动文件
 ## 包选择
 - gorm
 - zap
+- excel：github.com/xuri/excelize/v2, 文档https://xuri.me/excelize/zh-hans/

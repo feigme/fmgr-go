@@ -15,16 +15,18 @@ type OptionTrade struct {
 	ID
 	Timestamps
 	Option
-	Sid        uint   // optionstrategy关联id
-	Position   string `gorm:"type:varchar(32)"` // seller or buyer
-	BuyPrice   string `gorm:"type:varchar(32)"` // 买价格
-	SellPrice  string `gorm:"type:varchar(32)"` // 卖价格
-	Profit     string `gorm:"type:varchar(32)"` // 收益
-	ProfitRate string `gorm:"type:varchar(32)"` // 收益率
-	Count      int64  `gorm:"not null"`         // 数量
-	Premium    string `gorm:"not null"`         // 期权权利金
-	Status     string `gorm:"not null"`         // 状态
-	Market     string `gorm:"type:varchar(8)"`  // 股票市场 HK/US
+	Sid        uint      // optionstrategy关联id
+	Position   string    `gorm:"type:varchar(32)"` // seller or buyer
+	BuyPrice   string    `gorm:"type:varchar(32)"` // 买价格
+	SellPrice  string    `gorm:"type:varchar(32)"` // 卖价格
+	Profit     string    `gorm:"type:varchar(32)"` // 收益
+	ProfitRate string    `gorm:"type:varchar(32)"` // 收益率
+	Count      int64     `gorm:"not null"`         // 数量
+	Premium    string    `gorm:"not null"`         // 期权权利金
+	Status     string    `gorm:"not null"`         // 状态
+	Market     string    `gorm:"type:varchar(8)"`  // 股票市场 HK/US
+	OpenTime   time.Time // 开仓时间
+	CloseTime  time.Time // 平仓时间
 }
 
 // 自定义表名
@@ -102,6 +104,10 @@ func (trade *OptionTrade) Close(price string) error {
 		trade.ProfitRate = fmt.Sprintf("%.2f", (pricef-cast.ToFloat64(trade.BuyPrice))/cast.ToFloat64(trade.BuyPrice))
 	}
 
+	if trade.CloseTime.IsZero() {
+		trade.CloseTime = time.Now()
+	}
+
 	return nil
 
 }
@@ -124,6 +130,9 @@ func (trade *OptionTrade) Invalid() error {
 		trade.SellPrice = "0.00"
 	}
 
+	if trade.CloseTime.IsZero() {
+		trade.CloseTime = time.Now()
+	}
 	return nil
 }
 
@@ -143,6 +152,10 @@ func (trade *OptionTrade) Exercise() error {
 	} else if trade.Position == enum.Option_Position_Buyer.Name() {
 		trade.ProfitRate = "-1.00"
 		trade.SellPrice = "0.00"
+	}
+
+	if trade.CloseTime.IsZero() {
+		trade.CloseTime = time.Now()
 	}
 
 	return nil
